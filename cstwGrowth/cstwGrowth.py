@@ -314,7 +314,7 @@ class cstwMPCmarket(EstimationMarketClass):
         self.LorenzDistance = dist        
         return dist
         
-    def showManyStats(self,spec_name=None,do_liquid=False,do_lifecycle=False):
+    def showManyStats(self,spec_name=None,do_lifecycle=False):
         '''
         Calculates the "many statistics" by averaging histories across simulated periods.  Displays
         the results as text and saves them to files if spec_name is not None.
@@ -676,20 +676,19 @@ for spec in spec_list:
         
     LorenzCurves = []
     Ginis = []
-    growthFactors = [1.00, 1.01, 1.02, 1.03, 1.04, 1.05]
+    growthFactors = np.power(np.array([1.0, 1.01, 1.02, 1.03, 1.04, 1.05]), 0.25)
         
         
     for g in growthFactors:
         NewEstimationEconomy = deepcopy(EstimationEconomy)
         for j in range(len(NewEstimationEconomy.agents)):
             if Params.do_lifecycle:
-                NewEstimationEconomy.agents[j].PermGroFacAgg = g**0.25
+                NewEstimationEconomy.agents[j].PermGroFacAgg = g
             else:
-                NewEstimationEconomy.agents[j].PermGroFac = [g**0.25]
+                NewEstimationEconomy.agents[j].PermGroFac = [g]
         NewEstimationEconomy.solve()
         NewEstimationEconomy.calcLorenzDistance()
         NewEstimationEconomy.showManyStats(Params.spec_name,
-                                           do_liquid=Params.do_liquid,
                                            do_lifecycle=Params.do_lifecycle)
         Ginis.append(NewEstimationEconomy.avgGini)
         LorenzCurves.append(NewEstimationEconomy.LorenzSim)
@@ -702,7 +701,7 @@ for spec in spec_list:
     colors = iter(cm.rainbow(np.linspace(0, 1, len(growthFactors))))
     for j in range(len(growthFactors)):
         plt.plot(LorenzAxis, LorenzCurves[j], '--', color=next(colors),
-                 label='g = ' + str(growthFactors[j]))
+                 label='g = ' + mystr(growthFactors[j]**4))
     plt.xlabel('Income percentile',fontsize=12)
     plt.ylabel('Cumulative wealth share',fontsize=12)
     plt.ylim([-0.02,1.0])
@@ -711,8 +710,8 @@ for spec in spec_list:
     fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
     
     fig = plt.figure()
-    plt.plot(growthFactors, Ginis, '-bo')
-    plt.xlabel('Annual growth',fontsize=12)
+    plt.plot(np.power(growthFactors,4), Ginis, '-bo')
+    plt.xlabel('Annual permanent income growth factor',fontsize=12)
     plt.ylabel('Gini coefficient',fontsize=12)
     plt.show()
     fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')

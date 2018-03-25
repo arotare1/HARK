@@ -17,7 +17,7 @@ from HARKutilities import approxMeanOneLognormal, combineIndepDstns, approxUnifo
 from HARKsimulation import drawDiscrete
 from HARKcore import Market
 #from HARKparallel import multiThreadCommandsFake
-import SetupParamsCSTW as Params
+import tryDifferentParams as Params
 import ConsIndShockModel as Model
 from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
 from scipy.optimize import golden, brentq
@@ -311,7 +311,7 @@ class cstwMPCmarket(EstimationMarketClass):
         self.LorenzDistance = dist        
         return dist
         
-    def showManyStats(self,spec_name=None):
+    def showManyStats(self,spec_name=None,do_lifecycle=False):
         '''
         Calculates the "many statistics" by averaging histories across simulated periods.  Displays
         the results as text and saves them to files if spec_name is not None.
@@ -325,6 +325,12 @@ class cstwMPCmarket(EstimationMarketClass):
         -------
         None
         '''
+        # Store growth factor that was used when solving the economy
+        if do_lifecycle:
+            self.growthFactor = self.agents[0].PermGroFacAgg
+        else:
+            self.growthFactor = self.agents[0].PermGroFac[0]
+        
         # Calculate MPC overall and by subpopulations
         MPCall = np.mean(self.MPCall_hist[self.ignore_periods:])
         MPCemployed = np.mean(self.MPCemployed_hist[self.ignore_periods:])
@@ -374,7 +380,7 @@ class cstwMPCmarket(EstimationMarketClass):
         
         # Save results to disk
         if spec_name is not None:
-            with open('./Results/' + spec_name + 'Results.txt','w') as f:
+            with open('./Results/' + spec_name + '_' + mystr(self.growthFactor) + 'Results.txt','w') as f:
                 f.write(results_string)
                 f.close()
         
