@@ -1,7 +1,6 @@
 Estimate is center=0.989139523424, spread=0.0
-Growth factor is 1.0024906793143211
-Lorenz distance is 40.82892918898595
-Average Gini coefficient is 0.459
+Growth factor is 1.00249067931
+Lorenz distance is 40.82892918839508
 Average MPC for all consumers is 0.162
 Average MPC in the top percentile of W/Y is 0.077
 Average MPC in the top decile of W/Y is 0.081

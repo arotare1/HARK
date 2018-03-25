@@ -353,6 +353,7 @@ class cstwMPCmarket(EstimationMarketClass):
         
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
+        results_string += 'Growth factor is ' + str(self.growthFactor) + '\n'
         results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
         results_string += 'Average Gini coefficient is ' + mystr(self.avgGini) + '\n'
         results_string += 'Average MPC for all consumers is ' + mystr(MPCall) + '\n'
@@ -701,7 +702,7 @@ for spec in spec_list:
     colors = iter(cm.rainbow(np.linspace(0, 1, len(growthFactors))))
     for j in range(len(growthFactors)):
         plt.plot(LorenzAxis, LorenzCurves[j], '--', color=next(colors),
-                 label='g = ' + mystr(growthFactors[j]**4))
+                 label='g^4 = ' + mystr(growthFactors[j]**4))
     plt.xlabel('Income percentile',fontsize=12)
     plt.ylabel('Cumulative wealth share',fontsize=12)
     plt.ylim([-0.02,1.0])
