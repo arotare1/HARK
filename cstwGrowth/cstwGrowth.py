@@ -23,6 +23,7 @@ from HARKcore import Market
 #from HARKparallel import multiThreadCommandsFake
 import ConsIndShockModel as Model
 from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
+import ParamsEstimates as Estimates
 from scipy.optimize import golden, brentq
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm # for plotting
@@ -542,179 +543,188 @@ def getGini(data,weights=None,presorted=False):
 ###############################################################################
 ###############################################################################
 
-# Create list of possible parameter specifications
+# Possible parameter specifications are:
     
-#spec_list = ['ParamsBetaDistLCliq',
-#             'ParamsBetaDistLCnw',
-#             'ParamsBetaDistPYliq',
-#             'ParamsBetaDistPYnw',
-#             'ParamsBetaPointLCliq',
-#             'ParamsBetaPointLCnw',
-#             'ParamsBetaPointPYliq',
-#             'ParamsBetaPointPYnw']
+#   'ParamsBetaDistLCliq'
+#   'ParamsBetaDistLCnw'
+#   'ParamsBetaDistPYliq'
+#   'ParamsBetaDistPYnw'
+#   'ParamsBetaPointLCliq'
+#   'ParamsBetaPointLCnw'
+#   'ParamsBetaPointPYliq'
+#   'ParamsBetaPointPYnw'
 
-#pdb.set_trace()    
-
-# Use just beta-point specification(s) for now
-spec_list = ['ParamsBetaPointPYnw']
-
-
-# Loop over specifications and compute results
-for spec in spec_list:
-    exec('import ' + spec + ' as Params')
     
-    # Set targets for K/Y and the Lorenz curve based on the data
-    if Params.do_liquid:
-        lorenz_target = np.array([0.0, 0.004, 0.025,0.117])
-        KY_target = 6.60
-    else: # This is hacky until I can find the liquid wealth data and import it
-        lorenz_target = getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=Params.percentiles_to_match)
-        lorenz_long_data = np.hstack((np.array(0.0),getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=np.arange(0.01,1.0,0.01).tolist()),np.array(1.0)))
-        #lorenz_target = np.array([-0.002, 0.01, 0.053,0.171])
-        KY_target = 10.26
-    
-    # Make AgentTypes for estimation
-    if Params.do_lifecycle:
-        DropoutType = cstwMPCagent(**Params.init_dropout)
-        DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
-        HighschoolType = deepcopy(DropoutType)
-        HighschoolType(**Params.adj_highschool)
-        HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
-        CollegeType = deepcopy(DropoutType)
-        CollegeType(**Params.adj_college)
-        CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
-        DropoutType.update()
-        HighschoolType.update()
-        CollegeType.update()
-        EstimationAgentList = []
-        for n in range(Params.pref_type_count):
-            EstimationAgentList.append(deepcopy(DropoutType))
-            EstimationAgentList.append(deepcopy(HighschoolType))
-            EstimationAgentList.append(deepcopy(CollegeType))
-    else:
-        if Params.do_agg_shocks:
-            PerpetualYouthType = cstwMPCagent(**Params.init_agg_shocks)
-        else:
-            PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
-        PerpetualYouthType.AgeDstn = np.array(1.0)
-        EstimationAgentList = []
-        for n in range(Params.pref_type_count):
-            EstimationAgentList.append(deepcopy(PerpetualYouthType))
-            
-    # Give all the AgentTypes different seeds
-    for j in range(len(EstimationAgentList)):
-        EstimationAgentList[j].seed = j
-        
-    # Make an economy for the consumers to live in
-    EstimationEconomy = cstwMPCmarket(**Params.init_market)
-    EstimationEconomy.agents = EstimationAgentList
-    EstimationEconomy.KYratioTarget = KY_target
-    EstimationEconomy.LorenzTarget = lorenz_target
-    if not Params.do_liquid:
-        EstimationEconomy.LorenzData = lorenz_long_data
-    if Params.do_lifecycle:
-        EstimationEconomy.PopGroFac = Params.PopGroFac
-        EstimationEconomy.TypeWeight = Params.TypeWeight_lifecycle
-        EstimationEconomy.T_retire = Params.working_T-1
-        EstimationEconomy.act_T = Params.T_sim_LC
-        EstimationEconomy.ignore_periods = Params.ignore_periods_LC
-    else:
-        EstimationEconomy.PopGroFac = 1.0
-        EstimationEconomy.TypeWeight = [1.0]
-        EstimationEconomy.act_T = Params.T_sim_PY
-        EstimationEconomy.ignore_periods = Params.ignore_periods_PY
+# Choose specification
+spec = 'ParamsBetaPointPYnw'
+exec('import ' + spec + ' as Params')
+
+# Skip estimation step and use previously computed estimates from ParamsEstimates
+Params.run_estimation = False
+
+# Set targets for K/Y and the Lorenz curve based on the data
+if Params.do_liquid:
+    lorenz_target = np.array([0.0, 0.004, 0.025,0.117])
+    KY_target = 6.60
+else: # This is hacky until I can find the liquid wealth data and import it
+    lorenz_target = getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=Params.percentiles_to_match)
+    lorenz_long_data = np.hstack((np.array(0.0),getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=np.arange(0.01,1.0,0.01).tolist()),np.array(1.0)))
+    #lorenz_target = np.array([-0.002, 0.01, 0.053,0.171])
+    KY_target = 10.26
+
+# Make AgentTypes for estimation
+if Params.do_lifecycle:
+    DropoutType = cstwMPCagent(**Params.init_dropout)
+    DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
+    HighschoolType = deepcopy(DropoutType)
+    HighschoolType(**Params.adj_highschool)
+    HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
+    CollegeType = deepcopy(DropoutType)
+    CollegeType(**Params.adj_college)
+    CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
+    DropoutType.update()
+    HighschoolType.update()
+    CollegeType.update()
+    EstimationAgentList = []
+    for n in range(Params.pref_type_count):
+        EstimationAgentList.append(deepcopy(DropoutType))
+        EstimationAgentList.append(deepcopy(HighschoolType))
+        EstimationAgentList.append(deepcopy(CollegeType))
+else:
     if Params.do_agg_shocks:
-        EstimationEconomy(**Params.aggregate_params)
-        EstimationEconomy.update()
-        EstimationEconomy.makeAggShkHist()
+        PerpetualYouthType = cstwMPCagent(**Params.init_agg_shocks)
+    else:
+        PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
+    PerpetualYouthType.AgeDstn = np.array(1.0)
+    EstimationAgentList = []
+    for n in range(Params.pref_type_count):
+        EstimationAgentList.append(deepcopy(PerpetualYouthType))
         
-    # Estimate the model as requested
-    if Params.run_estimation:
-        # Choose the bounding region for the parameter search
-        if Params.param_name == 'CRRA':
-            param_range = [0.2,70.0]
-            spread_range = [0.00001,1.0]
-        elif Params.param_name == 'DiscFac':
-            param_range = [0.95,0.995]
-            spread_range = [0.006,0.008]
+# Give all the AgentTypes different seeds
+for j in range(len(EstimationAgentList)):
+    EstimationAgentList[j].seed = j
+    
+# Make an economy for the consumers to live in
+EstimationEconomy = cstwMPCmarket(**Params.init_market)
+EstimationEconomy.agents = EstimationAgentList
+EstimationEconomy.KYratioTarget = KY_target
+EstimationEconomy.LorenzTarget = lorenz_target
+if not Params.do_liquid:
+    EstimationEconomy.LorenzData = lorenz_long_data
+if Params.do_lifecycle:
+    EstimationEconomy.PopGroFac = Params.PopGroFac
+    EstimationEconomy.TypeWeight = Params.TypeWeight_lifecycle
+    EstimationEconomy.T_retire = Params.working_T-1
+    EstimationEconomy.act_T = Params.T_sim_LC
+    EstimationEconomy.ignore_periods = Params.ignore_periods_LC
+else:
+    EstimationEconomy.PopGroFac = 1.0
+    EstimationEconomy.TypeWeight = [1.0]
+    EstimationEconomy.act_T = Params.T_sim_PY
+    EstimationEconomy.ignore_periods = Params.ignore_periods_PY
+if Params.do_agg_shocks:
+    EstimationEconomy(**Params.aggregate_params)
+    EstimationEconomy.update()
+    EstimationEconomy.makeAggShkHist()
+    
+# Estimate the model as requested
+if Params.run_estimation:
+    # Choose the bounding region for the parameter search
+    if Params.param_name == 'CRRA':
+        param_range = [0.2,70.0]
+        spread_range = [0.00001,1.0]
+    elif Params.param_name == 'DiscFac':
+        param_range = [0.95,0.995]
+        spread_range = [0.006,0.008]
+    else:
+        print('Parameter range for ' + Params.param_name + ' has not been defined!')
+    
+    if Params.do_param_dist:
+        # Run the param-dist estimation
+        paramDistObjective = lambda spread : findLorenzDistanceAtTargetKY(
+                                                        Economy = EstimationEconomy,
+                                                        param_name = Params.param_name,
+                                                        param_count = Params.pref_type_count,
+                                                        center_range = param_range,
+                                                        spread = spread,
+                                                        dist_type = Params.dist_type)
+        t_start = clock()
+        spread_estimate = golden(paramDistObjective,brack=spread_range,tol=1e-4)
+        center_estimate = EstimationEconomy.center_save
+        t_end = clock()
+    else:
+        # Run the param-point estimation only
+        paramPointObjective = lambda center : getKYratioDifference(Economy = EstimationEconomy,
+                                             param_name = Params.param_name,
+                                             param_count = Params.pref_type_count,
+                                             center = center,
+                                             spread = 0.0,
+                                             dist_type = Params.dist_type)
+        t_start = clock()
+        pdb.set_trace()
+        center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
+        spread_estimate = 0.0
+        t_end = clock()
+    
+    print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
+    EstimationEconomy.center_estimate = center_estimate
+    EstimationEconomy.spread_estimate = spread_estimate 
+else:
+    center_estimate = eval('Estimates.center_' + Params.spec_name)
+    spread_estimate = eval('Estimates.spread_' + Params.spec_name)
+    EstimationEconomy.center_estimate = center_estimate
+    EstimationEconomy.spread_estimate = spread_estimate 
+
+
+EstimationEconomy.LorenzBool = True
+EstimationEconomy.ManyStatsBool = True
+EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
+    
+LorenzCurves = []
+Ginis = []
+growthFactors = np.power(np.array([1.0, 1.015, 1.02, 1.025, 1.03]), 0.25)
+#growthFactors = np.power(np.array([1.015, 1.02]), 0.25)
+    
+    
+for g in growthFactors:
+    print('Now solving model for g = ' + str(g))
+    NewEstimationEconomy = deepcopy(EstimationEconomy)
+    for j in range(len(NewEstimationEconomy.agents)):
+        if Params.do_lifecycle:
+            NewEstimationEconomy.agents[j].PermGroFacAgg = g
         else:
-            print('Parameter range for ' + Params.param_name + ' has not been defined!')
-        
-        if Params.do_param_dist:
-            # Run the param-dist estimation
-            paramDistObjective = lambda spread : findLorenzDistanceAtTargetKY(
-                                                            Economy = EstimationEconomy,
-                                                            param_name = Params.param_name,
-                                                            param_count = Params.pref_type_count,
-                                                            center_range = param_range,
-                                                            spread = spread,
-                                                            dist_type = Params.dist_type)
-            t_start = clock()
-            spread_estimate = golden(paramDistObjective,brack=spread_range,tol=1e-4)
-            center_estimate = EstimationEconomy.center_save
-            t_end = clock()
-        else:
-            # Run the param-point estimation only
-            paramPointObjective = lambda center : getKYratioDifference(Economy = EstimationEconomy,
-                                                 param_name = Params.param_name,
-                                                 param_count = Params.pref_type_count,
-                                                 center = center,
-                                                 spread = 0.0,
-                                                 dist_type = Params.dist_type)
-            t_start = clock()
-            center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
-            spread_estimate = 0.0
-            t_end = clock()
-        
-        print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
-        EstimationEconomy.center_estimate = center_estimate
-        EstimationEconomy.spread_estimate = spread_estimate 
+            NewEstimationEconomy.agents[j].PermGroFac = [g]
+    t_start = clock()
+    NewEstimationEconomy.solve()
+    t_end = clock()
+    NewEstimationEconomy.calcLorenzDistance()
+    NewEstimationEconomy.showManyStats(Params.spec_name,
+                                       do_lifecycle=Params.do_lifecycle)
+    Ginis.append(NewEstimationEconomy.avgGini)
+    LorenzCurves.append(NewEstimationEconomy.LorenzSim)
+    print('Solving model for g = ' + str(g) + ' took ' + str(t_end-t_start) + ' seconds.')
     
-    
-    EstimationEconomy.LorenzBool = True
-    EstimationEconomy.ManyStatsBool = True
-    EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
-        
-    LorenzCurves = []
-    Ginis = []
-    growthFactors = np.power(np.array([1.0, 1.01, 1.02, 1.03, 1.04, 1.05]), 0.25)
-        
-        
-    for g in growthFactors:
-        NewEstimationEconomy = deepcopy(EstimationEconomy)
-        for j in range(len(NewEstimationEconomy.agents)):
-            if Params.do_lifecycle:
-                NewEstimationEconomy.agents[j].PermGroFacAgg = g
-            else:
-                NewEstimationEconomy.agents[j].PermGroFac = [g]
-        NewEstimationEconomy.solve()
-        NewEstimationEconomy.calcLorenzDistance()
-        NewEstimationEconomy.showManyStats(Params.spec_name,
-                                           do_lifecycle=Params.do_lifecycle)
-        Ginis.append(NewEstimationEconomy.avgGini)
-        LorenzCurves.append(NewEstimationEconomy.LorenzSim)
-        
-    # Plot Lorenz curve for the wealth distribution under each growth factor.
-    # This currently only works for do_liquid == False
-    LorenzAxis = np.arange(101,dtype=float)
-    fig = plt.figure()
-    plt.plot(LorenzAxis, EstimationEconomy.LorenzData,'-k', linewidth=1.5,label='data')
-    colors = iter(cm.rainbow(np.linspace(0, 1, len(growthFactors))))
-    for j in range(len(growthFactors)):
-        plt.plot(LorenzAxis, LorenzCurves[j], '--', color=next(colors),
-                 label='g^4 = ' + mystr(growthFactors[j]**4))
-    plt.xlabel('Income percentile',fontsize=12)
-    plt.ylabel('Cumulative wealth share',fontsize=12)
-    plt.ylim([-0.02,1.0])
-    plt.legend(loc='upper left')
-    plt.show()
-    fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
-    
-    fig = plt.figure()
-    plt.plot(np.power(growthFactors,4), Ginis, '-bo')
-    plt.xlabel('Annual permanent income growth factor',fontsize=12)
-    plt.ylabel('Gini coefficient',fontsize=12)
-    plt.show()
-    fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')
+# Plot Lorenz curve for the wealth distribution under each growth factor.
+# This currently only works for do_liquid == False
+LorenzAxis = np.arange(101,dtype=float)
+fig = plt.figure()
+plt.plot(LorenzAxis, EstimationEconomy.LorenzData,'-k', linewidth=1.5,label='data')
+colors = iter(cm.rainbow(np.linspace(0, 1, len(growthFactors))))
+for j in range(len(growthFactors)):
+    plt.plot(LorenzAxis, LorenzCurves[j], '--', color=next(colors),
+             label='g^4 = ' + mystr(growthFactors[j]**4))
+plt.xlabel('Income percentile',fontsize=12)
+plt.ylabel('Cumulative wealth share',fontsize=12)
+plt.ylim([-0.02,1.0])
+plt.legend(loc='upper left')
+plt.show()
+fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
+
+fig = plt.figure()
+plt.plot(np.power(growthFactors,4), Ginis, '-bo')
+plt.xlabel('Annual permanent income growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.show()
+fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')
             
         

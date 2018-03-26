@@ -4,6 +4,7 @@ A second stab / complete do-over of cstwMPC.  Steals some bits from old version.
 
 # Import the HARK library.  The assumption is that this code is in a folder
 # contained in the HARK folder. Also import ConsumptionSavingModel
+import pdb
 import sys 
 import os
 sys.path.insert(0, os.path.abspath('../'))
@@ -502,6 +503,7 @@ def calcStationaryAgeDstn(LivPrb,terminal_period):
     return AgeDstn
     
 
+
 # Set targets for K/Y and the Lorenz curve based on the data
 if Params.do_liquid:
     lorenz_target = np.array([0.0, 0.004, 0.025,0.117])
@@ -600,24 +602,25 @@ if Params.run_estimation:
                                              spread = 0.0,
                                              dist_type = Params.dist_type)
         t_start = clock()
+        pdb.set_trace()
         center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
         spread_estimate = 0.0
         t_end = clock()
         
 # Display statistics about the estimated model
-center_estimate = 0.989139523424 # for specification BetaPointPYnw with PermGroFac_i==1
-spread_estimate = 0.0 # for specification BetaPointPYnw with PermGroFac_i==1
+#center_estimate = 0.989139523424 # for specification BetaPointPYnw with PermGroFac_i==1
+#spread_estimate = 0.0 # for specification BetaPointPYnw with PermGroFac_i==1
 EstimationEconomy.LorenzBool = True
 EstimationEconomy.ManyStatsBool = True
 EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
 
 # For specification BetaPointPYnw, try different values of PermGroFac_i to compare to cstwGrowth for robustness
-EstimationEconomy.agents[0].PermGroFac = [1.05**0.25] # results match up with cstwGrowth
+#EstimationEconomy.agents[0].PermGroFac = [1.05**0.25] # results match up with cstwGrowth
 
 
 EstimationEconomy.solve()
 EstimationEconomy.calcLorenzDistance()
-#print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
+print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
 EstimationEconomy.center_estimate = center_estimate
 EstimationEconomy.spread_estimate = spread_estimate
 EstimationEconomy.showManyStats(Params.spec_name)

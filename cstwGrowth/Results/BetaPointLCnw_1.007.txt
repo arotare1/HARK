@@ -1,0 +1,28 @@
+Estimate is center=0.989050218236, spread=0.0
+Growth factor is 1.0074170717777329
+Lorenz distance is 22.004287891311307
+Average Gini coefficient is 0.614
+Average MPC for all consumers is 0.145
+Average MPC in the top percentile of W/Y is 0.088
+Average MPC in the top decile of W/Y is 0.097
+Average MPC in the top quintile of W/Y is 0.097
+Average MPC in the second quintile of W/Y is 0.085
+Average MPC in the middle quintile of W/Y is 0.079
+Average MPC in the fourth quintile of W/Y is 0.100
+Average MPC in the bottom quintile of W/Y is 0.365
+Average MPC in the top percentile of y is 0.103
+Average MPC in the top decile of y is 0.116
+Average MPC in the top quintile of y is 0.122
+Average MPC in the second quintile of y is 0.135
+Average MPC in the middle quintile of y is 0.135
+Average MPC in the fourth quintile of y is 0.142
+Average MPC in the bottom quintile of y is 0.192
+Average MPC for the employed is 0.119
+Average MPC for the unemployed is 0.156
+Average MPC for the retired is 0.214
+Of the population with the 1/3 highest MPCs...
+47.003% are in the bottom wealth quintile,
+24.480% are in the second wealth quintile,
+15.249% are in the third wealth quintile,
+9.195% are in the fourth wealth quintile,
+and 4.072% are in the top wealth quintile.
