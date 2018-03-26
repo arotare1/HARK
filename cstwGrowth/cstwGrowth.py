@@ -27,6 +27,7 @@ import ParamsEstimates as Estimates
 from scipy.optimize import golden, brentq
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm # for plotting
+import pickle
 #import csv
 
 mystr = lambda number : "{:.3f}".format(number)
@@ -556,11 +557,11 @@ def getGini(data,weights=None,presorted=False):
 
     
 # Choose specification
-spec = 'ParamsBetaPointPYnw'
+spec = 'ParamsBetaPointLCnw'
 exec('import ' + spec + ' as Params')
 
-# Skip estimation step and use previously computed estimates from ParamsEstimates
-Params.run_estimation = False
+Params.run_estimation = False    # Set to False to skip estimation step and use previously computed estimates from ParamsEstimates
+Params.solve_model = False       # Set to False to skip solving the model and use previously computed LorenzCurves for particular growthFactors
 
 # Set targets for K/Y and the Lorenz curve based on the data
 if Params.do_liquid:
@@ -627,7 +628,7 @@ if Params.do_agg_shocks:
     EstimationEconomy.update()
     EstimationEconomy.makeAggShkHist()
     
-# Estimate the model as requested
+# Estimate the model if run_estimation == True otherwise load preexisting estimates
 if Params.run_estimation:
     # Choose the bounding region for the parameter search
     if Params.param_name == 'CRRA':
@@ -652,6 +653,9 @@ if Params.run_estimation:
         spread_estimate = golden(paramDistObjective,brack=spread_range,tol=1e-4)
         center_estimate = EstimationEconomy.center_save
         t_end = clock()
+        # Save estimates
+        with open('./ParamsEstimates/' + Params.spec_name + '.pkl', 'w') as f:
+            pickle.dump([center_estimate, spread_estimate], f)
     else:
         # Run the param-point estimation only
         paramPointObjective = lambda center : getKYratioDifference(Economy = EstimationEconomy,
@@ -661,50 +665,58 @@ if Params.run_estimation:
                                              spread = 0.0,
                                              dist_type = Params.dist_type)
         t_start = clock()
-        pdb.set_trace()
         center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
         spread_estimate = 0.0
         t_end = clock()
+        # Save estimates
+        with open('./ParamsEstimates/' + Params.spec_name + '.pkl', 'w') as f:
+            pickle.dump([center_estimate, spread_estimate], f)
     
     print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 else:
-    center_estimate = eval('Estimates.center_' + Params.spec_name)
-    spread_estimate = eval('Estimates.spread_' + Params.spec_name)
+    with open('./ParamsEstimates/' + Params.spec_name + '.pkl') as f:
+        center_estimate, spread_estimate = pickle.load(f)
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 
-
-EstimationEconomy.LorenzBool = True
-EstimationEconomy.ManyStatsBool = True
-EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
+# Solve the model if solve_model == True otherwise load preexisting growthFactors, LorenzCurves
+if Params.solve_model:
+    EstimationEconomy.LorenzBool = True
+    EstimationEconomy.ManyStatsBool = True
+    EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
     
-LorenzCurves = []
-Ginis = []
-growthFactors = np.power(np.array([1.0, 1.015, 1.02, 1.025, 1.03]), 0.25)
-#growthFactors = np.power(np.array([1.015, 1.02]), 0.25)
+    growthFactors = np.power(np.array([1.0, 1.005, 1.01, 1.015, 1.02, 1.025, 1.03]), 0.25)    
+    LorenzCurves = []
+    Ginis = []
+        
+    for g in growthFactors:
+        print('Now solving model for g = ' + str(g))
+        NewEstimationEconomy = deepcopy(EstimationEconomy)
+        for j in range(len(NewEstimationEconomy.agents)):
+            if Params.do_lifecycle:
+                NewEstimationEconomy.agents[j].PermGroFacAgg = g
+            else:
+                NewEstimationEconomy.agents[j].PermGroFac = [g]
+        t_start = clock()
+        NewEstimationEconomy.solve()
+        t_end = clock()
+        NewEstimationEconomy.calcLorenzDistance()
+        NewEstimationEconomy.showManyStats(Params.spec_name,
+                                           do_lifecycle=Params.do_lifecycle)
+        Ginis.append(NewEstimationEconomy.avgGini)
+        LorenzCurves.append(NewEstimationEconomy.LorenzSim)
+        print('Solving model for g = ' + str(g) + ' took ' + str(t_end-t_start) + ' seconds.')
+        
+    # Save growthFactors and corresponding LorenzCurves and Ginis
+    with open('./LorenzCurves/' + Params.spec_name + '.pkl', 'w') as f:
+        pickle.dump([growthFactors, LorenzCurves, Ginis], f)
+else:
+    with open('./LorenzCurves/' + Params.spec_name + '.pkl') as f:
+        growthFactors, LorenzCurves, Ginis = pickle.load(f)
     
-    
-for g in growthFactors:
-    print('Now solving model for g = ' + str(g))
-    NewEstimationEconomy = deepcopy(EstimationEconomy)
-    for j in range(len(NewEstimationEconomy.agents)):
-        if Params.do_lifecycle:
-            NewEstimationEconomy.agents[j].PermGroFacAgg = g
-        else:
-            NewEstimationEconomy.agents[j].PermGroFac = [g]
-    t_start = clock()
-    NewEstimationEconomy.solve()
-    t_end = clock()
-    NewEstimationEconomy.calcLorenzDistance()
-    NewEstimationEconomy.showManyStats(Params.spec_name,
-                                       do_lifecycle=Params.do_lifecycle)
-    Ginis.append(NewEstimationEconomy.avgGini)
-    LorenzCurves.append(NewEstimationEconomy.LorenzSim)
-    print('Solving model for g = ' + str(g) + ' took ' + str(t_end-t_start) + ' seconds.')
-    
-# Plot Lorenz curve for the wealth distribution under each growth factor.
+# Plot Lorenz curves for wealth distributions under each growth factor
 # This currently only works for do_liquid == False
 LorenzAxis = np.arange(101,dtype=float)
 fig = plt.figure()
@@ -720,9 +732,14 @@ plt.legend(loc='upper left')
 plt.show()
 fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
 
+# Plot Gini coefficients for each growth factor
+if not Params.do_lifecycle:
+    xlabel = 'Annual permanent income growth factor'
+else:
+    xlabel = 'Annual TFP growth factor'
 fig = plt.figure()
 plt.plot(np.power(growthFactors,4), Ginis, '-bo')
-plt.xlabel('Annual permanent income growth factor',fontsize=12)
+plt.xlabel(xlabel,fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.show()
 fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')
