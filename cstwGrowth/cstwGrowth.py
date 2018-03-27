@@ -21,9 +21,9 @@ from HARKutilities import approxMeanOneLognormal, combineIndepDstns, approxUnifo
 from HARKsimulation import drawDiscrete
 from HARKcore import Market
 #from HARKparallel import multiThreadCommandsFake
+import SetupParams as Params
 import ConsIndShockModel as Model
 from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
-import ParamsEstimates as Estimates
 from scipy.optimize import golden, brentq
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm # for plotting
@@ -32,9 +32,13 @@ import pickle
 
 mystr = lambda number : "{:.3f}".format(number)
 
-# Turn aggregate shocks off by using the following agent and market classes:
-EstimationAgentClass = Model.IndShockConsumerType
-EstimationMarketClass = Market
+# Currently only works for do_agg_shocks == False
+if Params.do_agg_shocks:
+    EstimationAgentClass = AggShockConsumerType
+    EstimationMarketClass = CobbDouglasEconomy
+else:
+    EstimationAgentClass = Model.IndShockConsumerType
+    EstimationMarketClass = Market
 
 class cstwMPCagent(EstimationAgentClass):
     '''
@@ -316,7 +320,7 @@ class cstwMPCmarket(EstimationMarketClass):
         self.LorenzDistance = dist        
         return dist
         
-    def showManyStats(self,spec_name=None,do_lifecycle=False):
+    def showManyStats(self,spec_name=None,vary_TFP=True,do_lifecycle=False,PermGroFac_d=1.0128796271432232):
         '''
         Calculates the "many statistics" by averaging histories across simulated periods.  Displays
         the results as text and saves them to files if spec_name is not None.
@@ -331,57 +335,31 @@ class cstwMPCmarket(EstimationMarketClass):
         None
         '''
         
-        # Calculate and store average Gini coefficient
+        # Compute and store average Gini coefficient
         Gini = np.mean(self.Gini_hist[self.ignore_periods:])
         self.avgGini = Gini
         
         # Store growth factor that was used when solving the economy
-        if do_lifecycle:
-            self.growthFactor = self.agents[0].PermGroFacAgg
-        else:
-            self.growthFactor = self.agents[0].PermGroFac[0]
+        if spec_name is not None:
+            if vary_TFP:
+                self.growthFactor = self.agents[0].PermGroFacAgg
+            elif do_lifecycle:
+                # in this case the growth factor is the factor that was used to scale the vector 
+                # of PermGroFac for each type. It can be retrieved by dividing dropout's first-period
+                # PermGroFac by the default PermGroFac_d in the first period.
+                self.growthFactor = self.agents[0].PermGroFac[0]/PermGroFac_d
+            else:
+                self.growthFactor = self.agents[0].PermGroFac[0]
+                
             
         # Store Lorenz data
         self.LorenzSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLong_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
-        
-        # Calculate MPC overall and by subpopulations
-        MPCall = np.mean(self.MPCall_hist[self.ignore_periods:])
-        MPCemployed = np.mean(self.MPCemployed_hist[self.ignore_periods:])
-        MPCunemployed = np.mean(self.MPCunemployed_hist[self.ignore_periods:])
-        MPCretired = np.mean(self.MPCretired_hist[self.ignore_periods:])
-        MPCbyIncome = np.mean(np.array(self.MPCbyIncome_hist)[self.ignore_periods:,:],axis=0)
-        MPCbyWealthRatio = np.mean(np.array(self.MPCbyWealthRatio_hist)[self.ignore_periods:,:],axis=0)
-        HandToMouthPct = np.mean(np.array(self.HandToMouthPct_hist)[self.ignore_periods:,:],axis=0)
         
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
         results_string += 'Growth factor is ' + str(self.growthFactor) + '\n'
         results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
-        results_string += 'Average Gini coefficient is ' + mystr(self.avgGini) + '\n'
-        results_string += 'Average MPC for all consumers is ' + mystr(MPCall) + '\n'
-        results_string += 'Average MPC in the top percentile of W/Y is ' + mystr(MPCbyWealthRatio[0]) + '\n'
-        results_string += 'Average MPC in the top decile of W/Y is ' + mystr(MPCbyWealthRatio[1]) + '\n'
-        results_string += 'Average MPC in the top quintile of W/Y is ' + mystr(MPCbyWealthRatio[2]) + '\n'
-        results_string += 'Average MPC in the second quintile of W/Y is ' + mystr(MPCbyWealthRatio[3]) + '\n'
-        results_string += 'Average MPC in the middle quintile of W/Y is ' + mystr(MPCbyWealthRatio[4]) + '\n'
-        results_string += 'Average MPC in the fourth quintile of W/Y is ' + mystr(MPCbyWealthRatio[5]) + '\n'
-        results_string += 'Average MPC in the bottom quintile of W/Y is ' + mystr(MPCbyWealthRatio[6]) + '\n'
-        results_string += 'Average MPC in the top percentile of y is ' + mystr(MPCbyIncome[0]) + '\n'
-        results_string += 'Average MPC in the top decile of y is ' + mystr(MPCbyIncome[1]) + '\n'
-        results_string += 'Average MPC in the top quintile of y is ' + mystr(MPCbyIncome[2]) + '\n'
-        results_string += 'Average MPC in the second quintile of y is ' + mystr(MPCbyIncome[3]) + '\n'
-        results_string += 'Average MPC in the middle quintile of y is ' + mystr(MPCbyIncome[4]) + '\n'
-        results_string += 'Average MPC in the fourth quintile of y is ' + mystr(MPCbyIncome[5]) + '\n'
-        results_string += 'Average MPC in the bottom quintile of y is ' + mystr(MPCbyIncome[6]) + '\n'
-        results_string += 'Average MPC for the employed is ' + mystr(MPCemployed) + '\n'
-        results_string += 'Average MPC for the unemployed is ' + mystr(MPCunemployed) + '\n'
-        results_string += 'Average MPC for the retired is ' + mystr(MPCretired) + '\n'
-        results_string += 'Of the population with the 1/3 highest MPCs...' + '\n'
-        results_string += mystr(HandToMouthPct[0]*100) + '% are in the bottom wealth quintile,' + '\n'
-        results_string += mystr(HandToMouthPct[1]*100) + '% are in the second wealth quintile,' + '\n'
-        results_string += mystr(HandToMouthPct[2]*100) + '% are in the third wealth quintile,' + '\n'
-        results_string += mystr(HandToMouthPct[3]*100) + '% are in the fourth wealth quintile,' + '\n'
-        results_string += 'and ' + mystr(HandToMouthPct[4]*100) + '% are in the top wealth quintile.' + '\n'
+        results_string += 'Average Gini coefficient is ' + str(self.avgGini) + '\n'
         print(results_string)
         
         # Save results to disk
@@ -543,25 +521,43 @@ def getGini(data,weights=None,presorted=False):
 
 ###############################################################################
 ###############################################################################
+#pdb.set_trace()
+Params.do_lifecycle = True          # Use lifecycle model if True, perpetual youth if False
+Params.do_param_dist = False         # Do param-dist version if True, param-point if False
+Params.vary_TFP = False               # Varies PermGroFacAgg if True, PermGroFac if False
+Params.run_estimation = False        # Set to False to skip estimation step and use previously 
+                                    # computed estimates from ParamsEstimates
+Params.solve_model = True           # Set to False to skip solving the model and use previously
+                                    # computed LorenzCurves for particular growthFactors
 
-# Possible parameter specifications are:
+# Create spec_name from Params
+Params.spec_name = 'Beta' if Params.param_name == 'DiscFac' else 'CRRA'
+Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
+Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
+Params.spec_name += 'liq' if Params.do_liquid else 'nw'
+Params.spec_name_short = Params.spec_name   # save a version of the spec name which doesn't 
+                                            # contain TFP or PERM to be used in the file names
+                                            # in ParamsEstimates since center and spread estimates
+                                            # don;t depend on which growth rate we vary
+Params.spec_name += 'TFP' if Params.vary_TFP else 'PERM'
+
+# Set number of beta types
+if Params.do_param_dist:
+    Params.pref_type_count = 7       # Number of discrete beta types in beta-dist
+else:
+    Params.pref_type_count = 1       # Just one beta type in beta-point
     
-#   'ParamsBetaDistLCliq'
-#   'ParamsBetaDistLCnw'
-#   'ParamsBetaDistPYliq'
-#   'ParamsBetaDistPYnw'
-#   'ParamsBetaPointLCliq'
-#   'ParamsBetaPointLCnw'
-#   'ParamsBetaPointPYliq'
-#   'ParamsBetaPointPYnw'
-
-    
-# Choose specification
-spec = 'ParamsBetaPointLCnw'
-exec('import ' + spec + ' as Params')
-
-Params.run_estimation = False    # Set to False to skip estimation step and use previously computed estimates from ParamsEstimates
-Params.solve_model = False       # Set to False to skip solving the model and use previously computed LorenzCurves for particular growthFactors
+# Set simulation parameters
+if Params.do_param_dist:
+    if Params.do_agg_shocks:
+        Params.Population = 16800
+    else:
+        Params.Population = 14000
+else:
+    if Params.do_agg_shocks:
+        Params.Population = 9600
+    else:
+        Params.Population = 10000    # Total number of simulated agents in the population
 
 # Set targets for K/Y and the Lorenz curve based on the data
 if Params.do_liquid:
@@ -676,27 +672,29 @@ if Params.run_estimation:
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 else:
-    with open('./ParamsEstimates/' + Params.spec_name + '.pkl') as f:
+    with open('./ParamsEstimates/' + Params.spec_name_short + '.pkl') as f:
         center_estimate, spread_estimate = pickle.load(f)
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 
-# Solve the model if solve_model == True otherwise load preexisting growthFactors, LorenzCurves
+# Solve the model if solve_model == True otherwise load preexisting growthFactors, LorenzCurves, Ginis
 if Params.solve_model:
     EstimationEconomy.LorenzBool = True
     EstimationEconomy.ManyStatsBool = True
     EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
     
-    growthFactors = np.power(np.array([1.0, 1.005, 1.01, 1.015, 1.02, 1.025, 1.03]), 0.25)    
+    growthFactors = np.power(np.arange(1.0, 1.1, 0.01), 0.25)
     LorenzCurves = []
     Ginis = []
-        
+    
     for g in growthFactors:
-        print('Now solving model for g = ' + str(g))
+        print('Now solving model for g^4 = ' + str(g**4))
         NewEstimationEconomy = deepcopy(EstimationEconomy)
         for j in range(len(NewEstimationEconomy.agents)):
-            if Params.do_lifecycle:
+            if Params.vary_TFP:
                 NewEstimationEconomy.agents[j].PermGroFacAgg = g
+            elif Params.do_lifecycle:
+                NewEstimationEconomy.agents[j].PermGroFac = [i*g for i in EstimationEconomy.agents[j].PermGroFac]
             else:
                 NewEstimationEconomy.agents[j].PermGroFac = [g]
         t_start = clock()
@@ -704,14 +702,15 @@ if Params.solve_model:
         t_end = clock()
         NewEstimationEconomy.calcLorenzDistance()
         NewEstimationEconomy.showManyStats(Params.spec_name,
+                                           vary_TFP=Params.vary_TFP,
                                            do_lifecycle=Params.do_lifecycle)
         Ginis.append(NewEstimationEconomy.avgGini)
         LorenzCurves.append(NewEstimationEconomy.LorenzSim)
-        print('Solving model for g = ' + str(g) + ' took ' + str(t_end-t_start) + ' seconds.')
+        print('Solving model for g^4 = ' + str(g**4) + ' took ' + str(t_end-t_start) + ' seconds.')
         
     # Save growthFactors and corresponding LorenzCurves and Ginis
     with open('./LorenzCurves/' + Params.spec_name + '.pkl', 'w') as f:
-        pickle.dump([growthFactors, LorenzCurves, Ginis], f)
+        pickle.dump([growthFactors, LorenzCurves, Ginis], f)           
 else:
     with open('./LorenzCurves/' + Params.spec_name + '.pkl') as f:
         growthFactors, LorenzCurves, Ginis = pickle.load(f)
@@ -724,7 +723,7 @@ plt.plot(LorenzAxis, EstimationEconomy.LorenzData,'-k', linewidth=1.5,label='dat
 colors = iter(cm.rainbow(np.linspace(0, 1, len(growthFactors))))
 for j in range(len(growthFactors)):
     plt.plot(LorenzAxis, LorenzCurves[j], '--', color=next(colors),
-             label='g^4 = ' + mystr(growthFactors[j]**4))
+             label='g^4=' + mystr(growthFactors[j]**4))
 plt.xlabel('Income percentile',fontsize=12)
 plt.ylabel('Cumulative wealth share',fontsize=12)
 plt.ylim([-0.02,1.0])
@@ -733,12 +732,12 @@ plt.show()
 fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
 
 # Plot Gini coefficients for each growth factor
-if not Params.do_lifecycle:
-    xlabel = 'Annual permanent income growth factor'
-else:
+if Params.vary_TFP:
     xlabel = 'Annual TFP growth factor'
+else:
+    xlabel = 'Annual permanent income growth factor'
 fig = plt.figure()
-plt.plot(np.power(growthFactors,4), Ginis, '-bo')
+plt.plot(np.power(growthFactors, 4), Ginis, '-bo')
 plt.xlabel(xlabel,fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.show()
