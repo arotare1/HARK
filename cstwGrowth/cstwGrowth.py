@@ -523,9 +523,9 @@ def getGini(data,weights=None,presorted=False):
 ###############################################################################
 #pdb.set_trace()
 Params.do_lifecycle = True          # Use lifecycle model if True, perpetual youth if False
-Params.do_param_dist = False         # Do param-dist version if True, param-point if False
-Params.vary_TFP = False               # Varies PermGroFacAgg if True, PermGroFac if False
-Params.run_estimation = False        # Set to False to skip estimation step and use previously 
+Params.do_param_dist = True         # Do param-dist version if True, param-point if False
+Params.vary_TFP = True               # Varies PermGroFacAgg if True, PermGroFac if False
+Params.run_estimation = True        # Set to False to skip estimation step and use previously 
                                     # computed estimates from ParamsEstimates
 Params.solve_model = True           # Set to False to skip solving the model and use previously
                                     # computed LorenzCurves for particular growthFactors
