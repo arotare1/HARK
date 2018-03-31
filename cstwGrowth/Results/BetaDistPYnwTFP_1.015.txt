@@ -1,4 +1,0 @@
-Estimate is center=0.984581888184, spread=0.01007976019406378
-Growth factor is 1.0146738461686593
-Lorenz distance is 14.30036858737613
-Average Gini coefficient is 0.6640292998840214
