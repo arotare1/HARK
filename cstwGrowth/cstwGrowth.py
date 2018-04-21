@@ -89,7 +89,12 @@ class cstwMPCmarket(EstimationMarketClass):
     reap_vars = ['aLvlNow','pLvlNow','MPCnow','TranShkNow','EmpNow','t_age']
     sow_vars  = [] # Nothing needs to be sent back to agents in the idiosyncratic shocks version
     const_vars = ['LorenzBool','ManyStatsBool']
-    track_vars = ['MaggNow','AaggNow','KtoYnow','aLvlGini','aNrmGini','Lorenz','LorenzLong']#,'MPCall','MPCretired','MPCemployed','MPCunemployed','MPCbyIncome','MPCbyWealthRatio','HandToMouthPct']
+    track_vars = ['MaggNow','AaggNow','KtoYnow','Lorenz','LorenzLong','LorenzNrm', 'LorenzLongNrm',
+                  'aLvlGini', 'aNrmGini', 'aLvlMeanToMedian', 'aNrmMeanToMedian',
+                  'aLvlGini24_34', 'aLvlGini35_44', 'aLvlGini45_54', 'aLvlGini55_64', 'aLvlGiniRetired',
+                  'aNrmGini24_34', 'aNrmGini35_44', 'aNrmGini45_54', 'aNrmGini55_64', 'aNrmGiniRetired',
+                  'aLvlGini35', 'aNrmGini35',
+                  'aLvlTop1_5_10_60', 'aNrmTop1_5_10_60']
     dyn_vars = [] # No dynamics in the idiosyncratic shocks version
     
     def __init__(self,**kwds):
@@ -157,9 +162,10 @@ class cstwMPCmarket(EstimationMarketClass):
         # Combine inputs into single arrays
         aLvl = np.hstack(aLvlNow)
         pLvl = np.hstack(pLvlNow)
-        aNrm = aLvl/pLvl # Normalized assets (wealth ratio)
-        age  = np.hstack(t_age)
         TranShk = np.hstack(TranShkNow)
+        IncLvl = TranShk*pLvl # Labor income this period
+        aNrm = aLvl/IncLvl # wealth-to-income ratio
+        age  = np.hstack(t_age)
         Emp = np.hstack(EmpNow)
         
         # Calculate the capital to income ratio in the economy
@@ -171,78 +177,100 @@ class cstwMPCmarket(EstimationMarketClass):
         
         # Store Lorenz data if requested
         self.LorenzLong = np.nan
+        self.LorenzLongNrm = np.nan
         if LorenzBool:
-            #order = np.argsort(aLvl)
-            #aLvl = aLvl[order]
-            #CohortWeight = CohortWeight[order]
             self.aLvlGini = getGini(aLvl,weights=CohortWeight,presorted=False)
             self.aNrmGini = getGini(aNrm,weights=CohortWeight,presorted=False)
-            wealth_shares = getLorenzShares(aLvl,weights=CohortWeight,percentiles=self.LorenzPercentiles,presorted=False)
+            wealth_shares = getLorenzShares(aLvl,weights=CohortWeight,percentiles=self.LorenzPercentiles,
+                                            presorted=False)
             self.Lorenz = wealth_shares
+            wealth_sharesNrm = getLorenzShares(aNrm,weights=CohortWeight,percentiles=self.LorenzPercentiles,
+                                               presorted=False)
+            self.LorenzNrm = wealth_sharesNrm
             if ManyStatsBool:
-                self.LorenzLong = getLorenzShares(aLvl,weights=CohortWeight,percentiles=np.arange(0.01,1.0,0.01),presorted=False)                
-        else:
-            self.Lorenz = np.nan # Store nothing if we don't want Lorenz data
+                self.LorenzLong = getLorenzShares(aLvl,weights=CohortWeight,
+                                                  percentiles=np.arange(0.01,1.0,0.01),presorted=False)
+                self.LorenzLongNrm = getLorenzShares(aNrm,weights=CohortWeight,
+                                                     percentiles=np.arange(0.01,1.0,0.01),presorted=False)                
+        else: # Store nothing if we don't want Lorenz data
+            self.Lorenz = np.nan
+            self.LorenzNrm = np.nan
             self.aLvlGini = np.nan
             self.aNrmGini = np.nan
             
-#        # Calculate a whole bunch of statistics if requested
-#        if ManyStatsBool:
-#            # Reshape other inputs
-#            MPC  = np.hstack(MPCnow)
-#            
-#            # Sort other data items if aLvl and CohortWeight were sorted
-#            if LorenzBool:
-#                pLvl = pLvl[order]
-#                MPC  = MPC[order]
-#                TranShk = TranShk[order]
-#                age = age[order]
-#                Emp = Emp[order]
-#            aNrm = aLvl/pLvl # Normalized assets (wealth ratio)
-#            IncLvl = TranShk*pLvl # Labor income this period
-#                
-#            # Calculate overall population MPC and by subpopulations
-#            MPCannual = 1.0 - (1.0 - MPC)**4
-#            self.MPCall = np.sum(MPCannual*CohortWeight)/np.sum(CohortWeight)
-#            employed =  Emp
-#            unemployed = np.logical_not(employed)
-#            if self.T_retire > 0: # Adjust for the lifecycle model, where agents might be retired instead
-#                unemployed = np.logical_and(unemployed,age < self.T_retire)
-#                employed   = np.logical_and(employed,age < self.T_retire)
-#                retired    = age >= self.T_retire
-#            else:
-#                retired    = np.zeros_like(unemployed,dtype=bool)
-#            self.MPCunemployed = np.sum(MPCannual[unemployed]*CohortWeight[unemployed])/np.sum(CohortWeight[unemployed])
-#            self.MPCemployed   = np.sum(MPCannual[employed]*CohortWeight[employed])/np.sum(CohortWeight[employed])
-#            self.MPCretired    = np.sum(MPCannual[retired]*CohortWeight[retired])/np.sum(CohortWeight[retired])
-#            self.MPCbyWealthRatio = calcSubpopAvg(MPCannual,aNrm,self.cutoffs,CohortWeight)
-#            self.MPCbyIncome      = calcSubpopAvg(MPCannual,IncLvl,self.cutoffs,CohortWeight)
-#            
-#            # Calculate the wealth quintile distribution of "hand to mouth" consumers
-#            quintile_cuts = getPercentiles(aLvl,weights=CohortWeight,percentiles=[0.2, 0.4, 0.6, 0.8])
-#            wealth_quintiles = np.ones(aLvl.size,dtype=int)
-#            wealth_quintiles[aLvl > quintile_cuts[0]] = 2
-#            wealth_quintiles[aLvl > quintile_cuts[1]] = 3
-#            wealth_quintiles[aLvl > quintile_cuts[2]] = 4
-#            wealth_quintiles[aLvl > quintile_cuts[3]] = 5
-#            MPC_cutoff = getPercentiles(MPCannual,weights=CohortWeight,percentiles=[2.0/3.0]) # Looking at consumers with MPCs in the top 1/3
-#            these = MPCannual > MPC_cutoff
-#            in_top_third_MPC = wealth_quintiles[these]
-#            temp_weights = CohortWeight[these]
-#            hand_to_mouth_total = np.sum(temp_weights)
-#            hand_to_mouth_pct = []
-#            for q in range(1,6):
-#                hand_to_mouth_pct.append(np.sum(temp_weights[in_top_third_MPC == q])/hand_to_mouth_total)
-#            self.HandToMouthPct = np.array(hand_to_mouth_pct)
-#            
-#        else: # If we don't want these stats, just put empty values in history
-#            self.MPCall = np.nan
-#            self.MPCunemployed = np.nan
-#            self.MPCemployed = np.nan
-#            self.MPCretired = np.nan
-#            self.MPCbyWealthRatio = np.nan
-#            self.MPCbyIncome = np.nan
-#            self.HandToMouthPct = np.nan
+        # Calculate a whole bunch of statistics if requested
+        if ManyStatsBool:
+            
+            employed =  Emp
+            unemployed = np.logical_not(employed)
+            if self.T_retire > 0: # Adjust for the lifecycle model, where agents might be retired instead
+                unemployed = np.logical_and(unemployed,age < self.T_retire)
+                employed   = np.logical_and(employed,age < self.T_retire)
+                retired    = age >= self.T_retire
+            else:
+                retired    = np.zeros_like(unemployed,dtype=bool)
+            
+            # Compute statistics for wealth levels
+            self.aLvlMeanToMedian = np.mean(aLvl)/np.median(aLvl)
+            self.aLvlGini24_34 = getGini(aLvl[age<=34*4],
+                                         weights=CohortWeight[age<=34*4],presorted=False)
+            self.aLvlGini35 = getGini(aLvl[age==35*4], weights=CohortWeight[age==35*4],presorted=False)
+            self.aLvlGini35_44 = getGini(aLvl[np.logical_and(age>=35*4,age<=44*4)],
+                                         weights=CohortWeight[np.logical_and(age>=35*4,age<=44*4)],
+                                         presorted=False)
+            self.aLvlGini45_54 = getGini(aLvl[np.logical_and(age>=45*4,age<=54*4)],
+                                         weights=CohortWeight[np.logical_and(age>=45*4,age<=54*4)],
+                                         presorted=False)
+            self.aLvlGini55_64 = getGini(aLvl[np.logical_and(age>=55*4,age<=64*4)],
+                                         weights=CohortWeight[np.logical_and(age>=55*4,age<=64*4)],
+                                         presorted=False)
+            self.aLvlGiniRetired = getGini(aLvl[retired],weights=CohortWeight[retired],presorted=False)
+            
+            # Compute statistics for wealth-to-income ratios
+            self.aNrmMeanToMedian = np.mean(aNrm)/np.median(aNrm)
+            self.aNrmGini24_34 = getGini(aNrm[age<=34*4],
+                                         weights=CohortWeight[age<=34*4],presorted=False)
+            self.aNrmGini35 = getGini(aNrm[age==35*4], weights=CohortWeight[age==35*4],presorted=False)
+            self.aNrmGini35_44 = getGini(aNrm[np.logical_and(age>=35*4,age<=44*4)],
+                                         weights=CohortWeight[np.logical_and(age>=35*4,age<=44*4)],
+                                         presorted=False)
+            self.aNrmGini45_54 = getGini(aNrm[np.logical_and(age>=45*4,age<=54*4)],
+                                         weights=CohortWeight[np.logical_and(age>=45*4,age<=54*4)],
+                                         presorted=False)
+            self.aNrmGini55_64 = getGini(aNrm[np.logical_and(age>=55*4,age<=64*4)],
+                                         weights=CohortWeight[np.logical_and(age>=55*4,age<=64*4)],
+                                         presorted=False)
+            self.aNrmGiniRetired = getGini(aLvl[retired],weights=CohortWeight[retired],presorted=False)
+            
+            # Compute wealth shares of the top 1,5,10,60 percent.
+            # These percentiles were chosen to match the available data from the OECD
+            self.aLvlTop1_5_10_60 = np.ones(4) - getLorenzShares(aLvl, weights=CohortWeight,
+                                                    percentiles=[0.99, 0.95, 0.9, 0.4],
+                                                    presorted=False)
+            # Compute wealth-to-income shares of the top 1,5,10,60 percent.
+            # These percentiles were chosen to match the available data from the OECD
+            self.aNrmTop1_5_10_60 = np.ones(4) - getLorenzShares(aNrm, weights=CohortWeight,
+                                                    percentiles=[0.99, 0.95, 0.9, 0.4],
+                                                    presorted=False)
+ 
+        else: # If we don't want these stats, just put empty values in history
+            self.aLvlMeanToMedian = np.nan
+            self.aNrmMeanToMedian = np.nan
+            self.aLvlGini24_34 = np.nan
+            self.aNrmGini24_34 = np.nan
+            self.aLvlGini35 = np.nan
+            self.aNrmGini35 = np.nan
+            self.aLvlGini35_44 = np.nan
+            self.aNrmGini35_44 = np.nan
+            self.aLvlGini45_54 = np.nan
+            self.aNrmGini45_54 = np.nan
+            self.aLvlGini55_64 = np.nan
+            self.aNrmGini55_64 = np.nan
+            self.aLvlGiniRetired = np.nan
+            self.aNrmGiniRetired = np.nan
+            self.aLvlTop1_5_10_60 = np.nan
+            self.aNrmTop1_5_10_60 = np.nan
+            
         
     def distributeParams(self,param_name,param_count,center,spread,dist_type):
         '''
@@ -338,27 +366,61 @@ class cstwMPCmarket(EstimationMarketClass):
         None
         '''
         
-        # Compute and store average Gini coefficient across histories
+        # Store Lorenz curve for wealth levels and wealth-to-income ratios
+        self.LorenzSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLong_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
+        self.LorenzNrmSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLongNrm_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
+        
+        # Compute and store average inequality data across histories
         self.aLvlGiniSim = np.mean(self.aLvlGini_hist[self.ignore_periods:])
         self.aNrmGiniSim = np.mean(self.aNrmGini_hist[self.ignore_periods:])
+        self.aLvlMeanToMedianSim = np.mean(self.aLvlMeanToMedian_hist[self.ignore_periods:])
+        self.aNrmMeanToMedianSim = np.mean(self.aNrmMeanToMedian_hist[self.ignore_periods:])
+        self.aLvlGini24_34Sim = np.mean(self.aLvlGini24_34_hist[self.ignore_periods:])
+        self.aNrmGini24_34Sim = np.mean(self.aNrmGini24_34_hist[self.ignore_periods:])
+        self.aLvlGini35Sim = np.mean(self.aLvlGini35_hist[self.ignore_periods:])
+        self.aNrmGini35Sim = np.mean(self.aNrmGini35_hist[self.ignore_periods:])
+        self.aLvlGini35_44Sim = np.mean(self.aLvlGini35_44_hist[self.ignore_periods:])
+        self.aNrmGini35_44Sim = np.mean(self.aNrmGini35_44_hist[self.ignore_periods:])
+        self.aLvlGini45_54Sim = np.mean(self.aLvlGini45_54_hist[self.ignore_periods:])
+        self.aNrmGini45_54Sim = np.mean(self.aNrmGini45_54_hist[self.ignore_periods:])
+        self.aLvlGini55_64Sim = np.mean(self.aLvlGini55_64_hist[self.ignore_periods:])
+        self.aNrmGini55_64Sim = np.mean(self.aNrmGini55_64_hist[self.ignore_periods:])
+        self.aLvlGiniRetiredSim = np.mean(self.aLvlGiniRetired_hist[self.ignore_periods:])
+        self.aNrmGiniRetiredSim = np.mean(self.aNrmGiniRetired_hist[self.ignore_periods:])
+        self.aLvlTop1_5_10_60Sim = np.hstack(np.mean(np.array(self.aLvlTop1_5_10_60_hist)[self.ignore_periods:,:],axis=0))
+        self.aNrmTop1_5_10_60Sim = np.hstack(np.mean(np.array(self.aNrmTop1_5_10_60_hist)[self.ignore_periods:,:],axis=0))
+        
         
         # Store growth factor that was used when solving the economy
         self.growthFactor = self.agents[0].PermGroFacAgg
                      
-        # Store Lorenz data
-        self.LorenzSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLong_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
-        
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
-        results_string += 'Growth factor is ' + str(self.growthFactor) + '\n'
-        results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
+        results_string += 'TFP growth factor is ' + str(self.growthFactor) + '\n'
+        results_string += 'Lorenz distance for wealth levels is ' + str(self.LorenzDistance) + '\n'
         results_string += 'Gini coefficient for wealth levels is ' + str(self.aLvlGiniSim) + '\n'
         results_string += 'Gini coefficient for wealth-to-income ratios is ' + str(self.aNrmGiniSim) + '\n'
+        results_string += 'Mean to median ratio for wealth levels is ' + str(self.aLvlMeanToMedianSim) + '\n'
+        results_string += 'Mean to median ratio for wealth-to-income ratios is ' + str(self.aNrmMeanToMedianSim) + '\n'
+        results_string += 'Gini coefficient for 24-34 year olds\' wealth levels is ' + str(self.aLvlGini24_34Sim) + '\n'
+        results_string += 'Gini coefficient for 35 year olds\' wealth levels is ' + str(self.aLvlGini35Sim) + '\n'
+        results_string += 'Gini coefficient for 35-44 year olds\' wealth levels is ' + str(self.aLvlGini35_44Sim) + '\n'
+        results_string += 'Gini coefficient for 45-54 year olds\' wealth levels is ' + str(self.aLvlGini45_54Sim) + '\n'
+        results_string += 'Gini coefficient for 55-64 year olds\' wealth levels is ' + str(self.aLvlGini55_64Sim) + '\n'
+        results_string += 'Gini coefficient for retirees\' wealth levels is ' + str(self.aLvlGiniRetiredSim) + '\n'
+        results_string += 'Gini coefficient for 24-34 year olds\' wealth-to-income ratios is ' + str(self.aNrmGini24_34Sim) + '\n'
+        results_string += 'Gini coefficient for 35 year olds\' wealth levels is ' + str(self.aLvlGini35Sim) + '\n'
+        results_string += 'Gini coefficient for 35-44 year olds\' wealth-to-income ratios is ' + str(self.aNrmGini35_44Sim) + '\n'
+        results_string += 'Gini coefficient for 45-54 year olds\' wealth-to-income ratios is ' + str(self.aNrmGini45_54Sim) + '\n'
+        results_string += 'Gini coefficient for 55-64 year olds\' wealth-to-income ratios is ' + str(self.aNrmGini55_64Sim) + '\n'
+        results_string += 'Gini coefficient for retirees\' wealth-to-income ratios is ' + str(self.aNrmGiniRetiredSim) + '\n'
+        results_string += 'Top 1%, 5%, 10%, 60% wealth level shares are ' + str(self.aLvlTop1_5_10_60Sim) + '\n'
+        results_string += 'Top 1%, 5%, 10%, 60% wealth-to-income shares are ' + str(self.aNrmTop1_5_10_60Sim) + '\n'
         print(results_string)
         
         # Save results to disk
         if spec_name is not None:
-            with open('./Results/' + spec_name + '_' + mystr(self.growthFactor) + '.txt','w') as f:
+            with open('./ResultsByGrowthFactor/' + spec_name + '_' + mystr(self.growthFactor) + '.txt','w') as f:
                 f.write(results_string)
         
 def getKYratioDifference(Economy,param_name,param_count,center,spread,dist_type):
@@ -515,9 +577,9 @@ def getGini(data,weights=None,presorted=False):
 ###############################################################################
 ###############################################################################
 #pdb.set_trace()
-Params.do_lifecycle = False          # Use lifecycle model if True, perpetual youth if False
+Params.do_lifecycle = True         # Use lifecycle model if True, perpetual youth if False
 Params.do_param_dist = False         # Do param-dist version if True, param-point if False
-Params.run_estimation = False        # Set to False to skip estimation step and use previously 
+Params.run_estimation = True        # Set to False to skip estimation step and use previously 
                                     # computed estimates from ParamsEstimates
 Params.solve_model = True           # Set to False to skip solving the model and use previously
                                     # computed LorenzCurves for particular growthFactors
@@ -527,7 +589,7 @@ Params.spec_name = 'Beta' if Params.param_name == 'DiscFac' else 'CRRA'
 Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 Params.spec_name += 'liq' if Params.do_liquid else 'nw'
-Params.spec_name += '2'
+#Params.spec_name += '2'
 
 # Set number of beta types
 if Params.do_param_dist:
@@ -669,7 +731,6 @@ else:
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 
-pdb.set_trace()
 # Solve the model if solve_model == True otherwise load preexisting growthFactors, LorenzCurves, Ginis
 if Params.solve_model:
     EstimationEconomy.LorenzBool = True
@@ -678,8 +739,15 @@ if Params.solve_model:
     
     growthFactors = np.power(np.arange(1.0, 1.1, 0.01), 0.25)
     LorenzCurves = []
-    aLvlGinis = []
-    aNrmGinis = []
+    LorenzCurvesNrm = []
+    aLvlGini = []
+    aNrmGini = []
+    aLvlGini35 = []
+    aNrmGini35 = []
+    aLvlMeanToMedian = []
+    aNrmMeanToMedian = []
+    aLvlTop1_5_10_60 = []
+    aNrmTop1_5_10_60 = []
     
     for g in growthFactors:
         print('Now solving model for g^4 = ' + str(g**4))
@@ -692,19 +760,36 @@ if Params.solve_model:
         t_end = clock()
         NewEstimationEconomy.calcLorenzDistance()
         NewEstimationEconomy.showManyStats(Params.spec_name)
-        aLvlGinis.append(NewEstimationEconomy.aLvlGiniSim)
-        aNrmGinis.append(NewEstimationEconomy.aNrmGiniSim)
         LorenzCurves.append(NewEstimationEconomy.LorenzSim)
+        LorenzCurvesNrm.append(NewEstimationEconomy.LorenzNrmSim)
+        aLvlGini.append(NewEstimationEconomy.aLvlGiniSim)
+        aNrmGini.append(NewEstimationEconomy.aNrmGiniSim)
+        aLvlGini35.append(NewEstimationEconomy.aLvlGini35Sim)
+        aNrmGini35.append(NewEstimationEconomy.aNrmGini35Sim)
+        aLvlMeanToMedian.append(NewEstimationEconomy.aLvlMeanToMedianSim)
+        aNrmMeanToMedian.append(NewEstimationEconomy.aNrmMeanToMedianSim)
+        aLvlTop1_5_10_60.append(NewEstimationEconomy.aLvlTop1_5_10_60Sim)
+        aNrmTop1_5_10_60.append(NewEstimationEconomy.aNrmTop1_5_10_60Sim)
         print('Solving model for g^4 = ' + str(g**4) + ' took ' + str(t_end-t_start) + ' seconds.')
         
     # Save growthFactors and corresponding LorenzCurves and Ginis
-    with open('./LorenzData/' + Params.spec_name + '.pkl', 'w') as f:
-        pickle.dump([growthFactors, LorenzCurves, aLvlGinis, aNrmGinis], f)
-    np.savetxt('./LorenzData/' + Params.spec_name, (growthFactors, aLvlGinis, aNrmGinis),
-               header='line 1: growthFactors, line 2: aLvlGinis, line 3: aNrmGinis')
+    with open('./ResultsAllGrowthFactors/' + Params.spec_name + '.pkl', 'w') as f:
+        pickle.dump([growthFactors, LorenzCurves, LorenzCurvesNrm,
+                     aLvlGini, aNrmGini, aLvlGini35, aNrmGini35,
+                     aLvlMeanToMedian, aNrmMeanToMedian,
+                     aLvlTop1_5_10_60, aNrmTop1_5_10_60], f)
+#    np.savetxt('./ResultsAllGrowthFactors/' + Params.spec_name,
+#               (growthFactors, LorenzCurves, LorenzCurvesNrm,
+#                aLvlGini, aNrmGini, aLvlGini35, aNrmGini35,
+#                aLvlMeanToMedian, aNrmMeanToMedian,
+#                aLvlTop1_5_10_60, aNrmTop1_5_10_60))#,
+#               header='line 1: growthFactors, line 2: LorenzCurve, line 3: LorenzCurveNrm,\n' +
+#                      'line 4: aLvlGini, line 5: aNrmGini, line 6: aLvlGini35,\n' +
+#                      'line 7: aNrmGini35, line 8: aLvlMeanToMedian, line 9: aNrmMeanToMedian,\n' +
+#                      'line 10: aLvlTop1_5_10_60, line 11: aNrmTop1_5_10_60')
 else:
-    with open('./LorenzData/' + Params.spec_name + '.pkl') as f:
-        growthFactors, LorenzCurves, aLvlGinis, aNrmGinis = pickle.load(f)
+    with open('./ResultsAllGrowthFactors/' + Params.spec_name + '.pkl') as f:
+        growthFactors, LorenzCurves, LorenzCurvesNrm, aLvlGini, aNrmGini, aLvlGini35, aNrmGini35, aLvlMeanToMedian, aNrmMeanToMedian, aLvlTop1_5_10_60, aNrmTop1_5_10_60 = pickle.load(f)
     
 # Plot Lorenz curves for wealth distributions under each growth factor
 # This currently only works for do_liquid == False
@@ -715,7 +800,7 @@ colors = iter(cm.rainbow(np.linspace(0, 1, len(growthFactors))))
 for j in range(len(growthFactors)):
     plt.plot(LorenzAxis, LorenzCurves[j], '--', color=next(colors),
              label='g^4=' + mystr(growthFactors[j]**4))
-plt.xlabel('Income percentile',fontsize=12)
+plt.xlabel('Wealth percentile',fontsize=12)
 plt.ylabel('Cumulative wealth share',fontsize=12)
 plt.ylim([-0.02,1.0])
 plt.legend(loc='upper left')
@@ -724,12 +809,36 @@ fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
 
 # Plot Gini coefficients for each growth factor
 fig = plt.figure()
-plt.plot(np.power(growthFactors, 4), aLvlGinis, '-bo', label='wealth level')
-plt.plot(np.power(growthFactors, 4), aNrmGinis, '-ro', label='wealth-to-income ratio')
+plt.plot(np.power(growthFactors, 4), aLvlGini, '-bo', label='wealth level')
+plt.plot(np.power(growthFactors, 4), aNrmGini, '-ro', label='wealth ratio')
 plt.xlabel('Annual TFP growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
-plt.legend(loc='upper left')
+plt.legend(loc='lower right')
 plt.show()
 fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')
+
+fig = plt.figure()
+plt.plot(np.power(growthFactors, 4), aLvlMeanToMedian, '-bo', label='wealth level')
+plt.plot(np.power(growthFactors, 4), aNrmMeanToMedian, '-ro', label='wealth ratio')
+plt.xlabel('Annual TFP growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='lower right')
+plt.show()
+
+new_aLvlGini = []
+new_aNrmGini = []
+for j in range(len(growthFactors)):
+    new_aLvlGini.append(getGini(LorenzCurves[j]))
+    new_aNrmGini.append(getGini(LorenzCurvesNrm[j]))
+    
+fig = plt.figure()
+plt.plot(np.power(growthFactors, 4), new_aLvlGini, '-bo', label='wealth level')
+plt.plot(np.power(growthFactors, 4), new_aNrmGini, '-ro', label='wealth ratio')
+plt.xlabel('Annual TFP growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='lower right')
+plt.show()
+
+
             
         
