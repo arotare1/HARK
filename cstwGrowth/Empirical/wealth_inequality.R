@@ -6,6 +6,13 @@ library(ggrepel)
 setwd('/Users/andreea/Documents/phd/2ndyrpaper/HARK/cstwGrowth/Empirical')
 
 #----------------------------------------------------------------------------
+# Import inequality results from the model
+# Specification: BetaDistPYnw
+#----------------------------------------------------------------------------
+model <- read.csv('../ResultsAllGrowthFactors/BetaPointPYnw.csv')
+model <- model[, -1]
+
+#----------------------------------------------------------------------------
 # Import real GDP data from the World Bank
 # https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
 #----------------------------------------------------------------------------
@@ -105,6 +112,7 @@ ggplot(oecd_wealth[oecd_wealth$VAR=='M2MR',], aes(x=GDP_growth, y=Value)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) +
+  theme_minimal() +
   labs(x='Annual GDP growth rate', y='Mean-to-median ratio of net wealth', 
        title='Mean-to-median ratio of net wealth by GDP growth rate over 30 years')
 
@@ -172,11 +180,11 @@ ggplot(oecd_wealth[oecd_wealth$VAR=='ST10' & oecd_wealth$g16==1,], aes(x=GDP_gro
 # Plot mean-to-median ratio of net wealth by GDP growth rate
 ggplot(cs_wealth, aes(x=GDP_84_14, y=Gini/100)) +
   geom_point() +
-  geom_label_repel(aes(label=CountryCode)) +
+  geom_text_repel(aes(label=CountryCode)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) +
   theme_minimal() +
   labs(x='Annual GDP growth rate', y='Gini coefficient of net wealth', 
-       title='Gini coefficient of net wealth by GDP growth rate over 30 years')
+       title='Gini coefficient of net wealth by GDP growth rate over 30 years') +
 
 # Plot mean-to-median ratio of net wealth by GDP growth rate for a subset of countries
 ggplot(cs_wealth[cs_wealth$g16==1,], aes(x=GDP_84_14, y=Gini/100)) +

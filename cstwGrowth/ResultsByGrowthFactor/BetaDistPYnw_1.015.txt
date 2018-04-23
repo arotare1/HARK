@@ -2,20 +2,22 @@ Estimate is center=0.984581888184, spread=0.01007976019406378
 TFP growth factor is 1.0146738461686593
 Lorenz distance for wealth levels is 14.30036858737613
 Gini coefficient for wealth levels is 0.6640292998840214
-Gini coefficient for wealth-to-income ratios is 0.8512935356751836
+Gini coefficient for wealth-to-income ratios is 0.8169450798328947
 Mean to median ratio for wealth levels is 2.5319123868429703
-Mean to median ratio for wealth-to-income ratios is 10.55416085295443
+Mean to median ratio for wealth-to-income ratios is 7.8636348513915895
 Gini coefficient for 24-34 year olds' wealth levels is 0.5911447010703318
 Gini coefficient for 35 year olds' wealth levels is 0.6784232678572593
 Gini coefficient for 35-44 year olds' wealth levels is 0.7125317310627365
 Gini coefficient for 45-54 year olds' wealth levels is 0.73720635446323
 Gini coefficient for 55-64 year olds' wealth levels is 0.7578367886795018
 Gini coefficient for retirees' wealth levels is nan
-Gini coefficient for 24-34 year olds' wealth-to-income ratios is 0.7383051869804587
+Gini coefficient for 24-34 year olds' wealth-to-income ratios is 0.6779996133729014
 Gini coefficient for 35 year olds' wealth levels is 0.6784232678572593
-Gini coefficient for 35-44 year olds' wealth-to-income ratios is 0.7825141112578371
-Gini coefficient for 45-54 year olds' wealth-to-income ratios is 0.8054636091357383
-Gini coefficient for 55-64 year olds' wealth-to-income ratios is 0.8244081650952433
+Gini coefficient for 35-44 year olds' wealth-to-income ratios is 0.7280667908489566
+Gini coefficient for 45-54 year olds' wealth-to-income ratios is 0.7569670358491133
+Gini coefficient for 55-64 year olds' wealth-to-income ratios is 0.7818085983350823
 Gini coefficient for retirees' wealth-to-income ratios is nan
-Top 1%, 5%, 10%, 60% wealth level shares are [0.08187497 0.29468954 0.47681901 0.96669479]
-Top 1%, 5%, 10%, 60% wealth-to-income shares are [0.36536103 0.6539281  0.78689639 0.98242478]
+Wealth shares of top 1%, 5%, 10% are [0.08187497 0.29468954 0.47681901]
+Wealth share of bottom 60% is 0.11390167339084444
+Wealth-to-income shares of top 1%, 5%, 10% are [0.27764641 0.57763031 0.73423596]
+Wealth-to-income share of bottom 60% is 0.049670085477709784

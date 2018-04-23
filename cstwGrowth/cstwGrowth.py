@@ -242,7 +242,7 @@ class cstwMPCmarket(EstimationMarketClass):
             self.aNrmGini55_64 = getGini(aNrm[np.logical_and(age>=55*4,age<=64*4)],
                                          weights=CohortWeight[np.logical_and(age>=55*4,age<=64*4)],
                                          presorted=False)
-            self.aNrmGiniRetired = getGini(aLvl[retired],weights=CohortWeight[retired],presorted=False)
+            self.aNrmGiniRetired = getGini(aNrm[retired],weights=CohortWeight[retired],presorted=False)
             
             # Compute wealth shares of the top 1,5,10 percent and of the bottom 60 percent
             # These percentiles were chosen to match the available data from the OECD
@@ -398,8 +398,8 @@ class cstwMPCmarket(EstimationMarketClass):
         self.aNrmBottom60Sim = np.mean(self.aNrmBottom60_hist[self.ignore_periods:])
         
         
-        # Store growth factor that was used when solving the economy
-        self.growthFactor = self.agents[0].PermGroFacAgg
+#        # Store growth factor that was used when solving the economy
+#        self.growthFactor = self.agents[0].PermGroFacAgg
                      
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
@@ -427,10 +427,10 @@ class cstwMPCmarket(EstimationMarketClass):
         results_string += 'Wealth-to-income share of bottom 60% is ' + str(self.aNrmBottom60Sim) + '\n'
         print(results_string)
         
-        # Save results to disk
-        if spec_name is not None:
-            with open('./ResultsByGrowthFactor/' + spec_name + '_' + mystr(self.growthFactor) + '.txt','w') as f:
-                f.write(results_string)
+#        # Save results to disk
+#        if spec_name is not None:
+#            with open('./ResultsByGrowthFactor/' + spec_name + '_' + mystr(self.growthFactor) + '.txt','w') as f:
+#                f.write(results_string)
         
 def getKYratioDifference(Economy,param_name,param_count,center,spread,dist_type):
     '''
@@ -586,18 +586,27 @@ def getGini(data,weights=None,presorted=False):
 ###############################################################################
 ###############################################################################
 #pdb.set_trace()
+
 Params.do_lifecycle = False         # Use lifecycle model if True, perpetual youth if False
-Params.do_param_dist = True        # Do param-dist version if True, param-point if False
-Params.run_estimation = True        # Set to False to skip estimation step and use previously 
+Params.do_param_dist = False        # Do param-dist version if True, param-point if False
+Params.varyTFP = True               # Varies PermGroFacAgg if True, PermGroFac if False
+Params.run_estimation = False       # Set to False to skip estimation step and use previously 
                                     # computed estimates from ParamsEstimates
 Params.solve_model = True           # Set to False to skip solving the model and use previously
                                     # computed LorenzCurves for particular growthFactors
+
+
 
 # Create spec_name from Params
 Params.spec_name = 'Beta' if Params.param_name == 'DiscFac' else 'CRRA'
 Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 Params.spec_name += 'liq' if Params.do_liquid else 'nw'
+Params.spec_name_short = Params.spec_name   # save a version of the spec name which doesn't 
+                                            # contain TFP or PERM to be used in the file names
+                                            # in ParamsEstimates since center and spread estimates
+                                            # don't depend on which growth rate we vary
+Params.spec_name += 'TFP' if Params.varyTFP else 'PERM'
 
 # Set number of beta types
 if Params.do_param_dist:
@@ -725,21 +734,21 @@ if Params.run_estimation:
     print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
     
     # Save estimates 
-    with open('./ParamsEstimates/' + Params.spec_name + '.pkl', 'w') as f:
+    with open('./ParamsEstimates/' + Params.spec_name_short + '.pkl', 'w') as f:
         pickle.dump([center_estimate, spread_estimate], f)
-    with open('./ParamsEstimates/' + Params.spec_name + '.txt','w') as f:
+    with open('./ParamsEstimates/' + Params.spec_name_short + '.txt','w') as f:
         f.write('center_estimate = %s \nspread_estimate = %s \nTFP growth factor used for estimation is %s'
                 % (center_estimate, spread_estimate, EstimationEconomy.agents[0].PermGroFacAgg))
     
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 else:
-    with open('./ParamsEstimates/' + Params.spec_name + '.pkl') as f:
+    with open('./ParamsEstimates/' + Params.spec_name_short + '.pkl') as f:
         center_estimate, spread_estimate = pickle.load(f)
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate 
 
-# Solve the model if solve_model == True otherwise load preexisting growthFactors, LorenzCurves, Ginis
+# Solve the model if solve_model == True otherwise load preexisting inequality data
 if Params.solve_model:
     EstimationEconomy.LorenzBool = True
     EstimationEconomy.ManyStatsBool = True
@@ -750,8 +759,18 @@ if Params.solve_model:
     LorenzCurvesNrm = []
     aLvlGini = []
     aNrmGini = []
+    aLvlGini24_34 = []
+    aNrmGini24_34 = []
     aLvlGini35 = []
     aNrmGini35 = []
+    aLvlGini35_44 = []
+    aNrmGini35_44 = []
+    aLvlGini45_54 = []
+    aNrmGini45_54 = []
+    aLvlGini55_64 = []
+    aNrmGini55_64 = []
+    aLvlGiniRetired = []
+    aNrmGiniRetired = []
     aLvlMeanToMedian = []
     aNrmMeanToMedian = []
     aLvlTop1_5_10 = []
@@ -763,7 +782,12 @@ if Params.solve_model:
         print('Now solving model for g^4 = ' + str(g**4))
         NewEstimationEconomy = deepcopy(EstimationEconomy)
         for j in range(len(NewEstimationEconomy.agents)):
-            NewEstimationEconomy.agents[j].PermGroFacAgg = g
+            if Params.varyTFP:
+                NewEstimationEconomy.agents[j].PermGroFacAgg = g
+            elif Params.do_lifecycle:
+                NewEstimationEconomy.agents[j].PermGroFac = [i*g for i in EstimationEconomy.agents[j].PermGroFac]
+            else:
+                NewEstimationEconomy.agents[j].PermGroFac = [g]
     
         t_start = clock()
         NewEstimationEconomy.solve()
@@ -776,12 +800,24 @@ if Params.solve_model:
         LorenzCurvesNrm.append(NewEstimationEconomy.LorenzNrmSim)
         aLvlGini.append(NewEstimationEconomy.aLvlGiniSim)
         aNrmGini.append(NewEstimationEconomy.aNrmGiniSim)
+        aLvlGini24_34.append(NewEstimationEconomy.aLvlGini24_34Sim)
+        aNrmGini24_34.append(NewEstimationEconomy.aNrmGini24_34Sim)
+        aLvlGini35.append(NewEstimationEconomy.aLvlGini35Sim)
+        aNrmGini35.append(NewEstimationEconomy.aNrmGini35Sim)
+        aLvlGini35_44.append(NewEstimationEconomy.aLvlGini35_44)
+        aNrmGini35_44.append(NewEstimationEconomy.aNrmGini35_44)
+        aLvlGini45_54.append(NewEstimationEconomy.aLvlGini45_54)
+        aNrmGini45_54.append(NewEstimationEconomy.aNrmGini45_54)
+        aLvlGini55_64.append(NewEstimationEconomy.aLvlGini55_64)
+        aNrmGini55_64.append(NewEstimationEconomy.aNrmGini55_64)
+        aLvlGiniRetired.append(NewEstimationEconomy.aLvlGiniRetired)
+        aNrmGiniRetired.append(NewEstimationEconomy.aNrmGiniRetired)
         aLvlMeanToMedian.append(NewEstimationEconomy.aLvlMeanToMedianSim)
         aNrmMeanToMedian.append(NewEstimationEconomy.aNrmMeanToMedianSim)
         aLvlTop1_5_10.append(NewEstimationEconomy.aLvlTop1_5_10Sim)
         aNrmTop1_5_10.append(NewEstimationEconomy.aNrmTop1_5_10Sim)
-        aLvlBottom60.append(NewEstimationEconomy.aLvlTop1_5_10Sim)
-        aNrmBottom60.append(NewEstimationEconomy.aNrmTop1_5_10Sim)
+        aLvlBottom60.append(NewEstimationEconomy.aLvlBottom60Sim)
+        aNrmBottom60.append(NewEstimationEconomy.aNrmBottom60Sim)
         
         print('Solving model for g^4 = ' + str(g**4) + ' took ' + str(t_end-t_start) + ' seconds.')
         
@@ -792,13 +828,29 @@ if Params.solve_model:
                      aLvlMeanToMedian, aNrmMeanToMedian,
                      aLvlTop1_5_10, aNrmTop1_5_10,
                      aLvlBottom60, aNrmBottom60], f)
-    csvdict = {'GDP_growth' : list(np.arange(1.0, 1.1, 0.01)),
-               'Gini_wealth' : aLvlGini,
-               'M2M_ratio' : aLvlMeanToMedian,
-               'Top1' : [item[0] for item in aLvlTop1_5_10],
-               'Top5' : [item[1] for item in aLvlTop1_5_10],
-               'Top10' : [item[2] for item in aLvlTop1_5_10],
-               'Bottom60' : aLvlBottom60}
+    csvdict = {'Growth' : list(np.arange(1.0, 1.1, 0.01)),
+               'Gini_Lvl' : aLvlGini,
+               'Gini_Lvl24_34' : aLvlGini24_34,
+               'Gini_Lvl35_44' : aLvlGini35_44,
+               'Gini_Lvl45_54' : aLvlGini45_54,
+               'Gini_Lvl55_64' : aLvlGini55_64,
+               'Gini_LvlRetired' : aLvlGiniRetired,
+               'M2M_Lvl' : aLvlMeanToMedian,
+               'Top1_Lvl' : [item[0] for item in aLvlTop1_5_10],
+               'Top5_Lvl' : [item[1] for item in aLvlTop1_5_10],
+               'Top10_Lvl' : [item[2] for item in aLvlTop1_5_10],
+               'Bottom60_Lvl' : aLvlBottom60,
+               'Gini_Nrm' : aNrmGini,
+               'Gini_Nrm24_34' : aNrmGini24_34,
+               'Gini_Nrm35_44' : aNrmGini35_44,
+               'Gini_Nrm45_54' : aNrmGini45_54,
+               'Gini_Nrm55_64' : aNrmGini55_64,
+               'Gini_NrmRetired' : aNrmGiniRetired,
+               'M2M_Nrm' : aNrmMeanToMedian,
+               'Top1_Nrm' : [item[0] for item in aNrmTop1_5_10],
+               'Top5_Nrm' : [item[1] for item in aNrmTop1_5_10],
+               'Top10_Nrm' : [item[2] for item in aNrmTop1_5_10],
+               'Bottom60_Nrm' : aNrmBottom60}
     
     df = pd.DataFrame.from_dict(csvdict)
     df.to_csv('./ResultsAllGrowthFactors/' + Params.spec_name + '.csv')
@@ -830,7 +882,7 @@ fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
 fig = plt.figure()
 plt.plot(np.power(growthFactors, 4), aLvlGini, '-bo', label='wealth level')
 plt.plot(np.power(growthFactors, 4), aNrmGini, '-ro', label='wealth ratio')
-plt.xlabel('Annual TFP growth factor',fontsize=12)
+plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
@@ -840,9 +892,9 @@ fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')
 fig = plt.figure()
 plt.plot(np.power(growthFactors, 4), aLvlMeanToMedian, '-bo', label='wealth level')
 plt.plot(np.power(growthFactors, 4), aNrmMeanToMedian, '-ro', label='wealth ratio')
-plt.xlabel('Annual TFP growth factor',fontsize=12)
+plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
-plt.legend(loc='lower right')
+plt.legend(loc='upper left')
 plt.show()
 
 # Compute Gini coefficients from average Lorenz curves and plot by growth factor
@@ -855,9 +907,9 @@ for j in range(len(growthFactors)):
 fig = plt.figure()
 plt.plot(np.power(growthFactors, 4), avg_aLvlGini, '-bo', label='wealth level')
 plt.plot(np.power(growthFactors, 4), avg_aNrmGini, '-ro', label='wealth ratio')
-plt.xlabel('Annual TFP growth factor',fontsize=12)
+plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
-plt.legend(loc='lower right')
+plt.legend(loc='upper left')
 plt.show()
 
 
