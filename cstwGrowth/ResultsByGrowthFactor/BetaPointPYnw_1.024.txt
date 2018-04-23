@@ -17,5 +17,7 @@ Gini coefficient for 35-44 year olds' wealth-to-income ratios is 0.2649005471173
 Gini coefficient for 45-54 year olds' wealth-to-income ratios is 0.2840695043363475
 Gini coefficient for 55-64 year olds' wealth-to-income ratios is 0.30521763855295364
 Gini coefficient for retirees' wealth-to-income ratios is nan
-Top 1%, 5%, 10%, 60% wealth level shares are [0.0417552  0.16627225 0.29253321 0.93701462]
-Top 1%, 5%, 10%, 60% wealth-to-income shares are [0.07998817 0.23278914 0.35750678 0.89608095]
+Wealth shares of top 1%, 5%, 10% are [0.0417552  0.16627225 0.29253321]
+Wealth share of bottom 60% is 0.21941675908107974
+Wealth-to-income shares of top 1%, 5%, 10% are [0.07998817 0.23278914 0.35750678]
+Wealth-to-income share of bottom 60% is 0.2405227570025678

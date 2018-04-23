@@ -1,0 +1,21 @@
+Estimate is center=0.989050218236, spread=0.0
+TFP growth factor is 1.0024906793143211
+Lorenz distance for wealth levels is 17.693623617104084
+Gini coefficient for wealth levels is 0.6356460878117899
+Gini coefficient for wealth-to-income ratios is 0.5606099907578936
+Mean to median ratio for wealth levels is 2.3448974226122123
+Mean to median ratio for wealth-to-income ratios is 1.9511805189341163
+Gini coefficient for 24-34 year olds' wealth levels is 0.5776721784026114
+Gini coefficient for 35 year olds' wealth levels is 0.5359348801365835
+Gini coefficient for 35-44 year olds' wealth levels is 0.5735516520134674
+Gini coefficient for 45-54 year olds' wealth levels is 0.5974835330229673
+Gini coefficient for 55-64 year olds' wealth levels is 0.668534673188836
+Gini coefficient for retirees' wealth levels is 0.7129544867788925
+Gini coefficient for 24-34 year olds' wealth-to-income ratios is 0.3981946035281608
+Gini coefficient for 35 year olds' wealth levels is 0.5359348801365835
+Gini coefficient for 35-44 year olds' wealth-to-income ratios is 0.40559843525675776
+Gini coefficient for 45-54 year olds' wealth-to-income ratios is 0.3679461777840375
+Gini coefficient for 55-64 year olds' wealth-to-income ratios is 0.5349445764465759
+Gini coefficient for retirees' wealth-to-income ratios is 0.7129544867788925
+Top 1%, 5%, 10%, 60% wealth level shares are [0.14965586 0.36603377 0.50995678 0.9432328 ]
+Top 1%, 5%, 10%, 60% wealth-to-income shares are [0.10267394 0.30489579 0.45640787 0.93135707]

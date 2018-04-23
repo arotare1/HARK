@@ -3,7 +3,7 @@ library(plyr)
 library(ggplot2)
 library(ggrepel)
 
-setwd('/Users/andreea/Documents/phd/2ndyrpaper/data')
+setwd('/Users/andreea/Documents/phd/2ndyrpaper/HARK/cstwGrowth/Empirical')
 
 #----------------------------------------------------------------------------
 # Read income group of each country from the World Bank
