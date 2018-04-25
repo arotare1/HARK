@@ -403,7 +403,7 @@ class cstwMPCmarket(EstimationMarketClass):
                      
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
-        results_string += 'TFP growth factor is ' + str(self.growthFactor) + '\n'
+#        results_string += 'TFP growth factor is ' + str(self.growthFactor) + '\n'
         results_string += 'Lorenz distance for wealth levels is ' + str(self.LorenzDistance) + '\n'
         results_string += 'Gini coefficient for wealth levels is ' + str(self.aLvlGiniSim) + '\n'
         results_string += 'Gini coefficient for wealth-to-income ratios is ' + str(self.aNrmGiniSim) + '\n'
@@ -587,26 +587,27 @@ def getGini(data,weights=None,presorted=False):
 ###############################################################################
 #pdb.set_trace()
 
+Params.do_param_dist = True        # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False         # Use lifecycle model if True, perpetual youth if False
-Params.do_param_dist = False        # Do param-dist version if True, param-point if False
-Params.varyTFP = True               # Varies PermGroFacAgg if True, PermGroFac if False
+Params.varyAGG = True               # Varies PermGroFacAgg if True, PermGroFac if False
 Params.run_estimation = False       # Set to False to skip estimation step and use previously 
                                     # computed estimates from ParamsEstimates
-Params.solve_model = True           # Set to False to skip solving the model and use previously
+Params.solve_model = False           # Set to False to skip solving the model and use previously
                                     # computed LorenzCurves for particular growthFactors
 
 
 
 # Create spec_name from Params
-Params.spec_name = 'Beta' if Params.param_name == 'DiscFac' else 'CRRA'
-Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
+
+#Params.spec_name = 'Beta' if Params.param_name == 'DiscFac' else 'CRRA'
+Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
-Params.spec_name += 'liq' if Params.do_liquid else 'nw'
+#Params.spec_name += 'liq' if Params.do_liquid else 'nw'
 Params.spec_name_short = Params.spec_name   # save a version of the spec name which doesn't 
-                                            # contain TFP or PERM to be used in the file names
+                                            # contain AGG or PERM to be used in the file names
                                             # in ParamsEstimates since center and spread estimates
                                             # don't depend on which growth rate we vary
-Params.spec_name += 'TFP' if Params.varyTFP else 'PERM'
+Params.spec_name += 'agg' if Params.varyAGG else 'perm'
 
 # Set number of beta types
 if Params.do_param_dist:
@@ -782,7 +783,7 @@ if Params.solve_model:
         print('Now solving model for g^4 = ' + str(g**4))
         NewEstimationEconomy = deepcopy(EstimationEconomy)
         for j in range(len(NewEstimationEconomy.agents)):
-            if Params.varyTFP:
+            if Params.varyAGG:
                 NewEstimationEconomy.agents[j].PermGroFacAgg = g
             elif Params.do_lifecycle:
                 NewEstimationEconomy.agents[j].PermGroFac = [i*g for i in EstimationEconomy.agents[j].PermGroFac]
@@ -822,12 +823,30 @@ if Params.solve_model:
         print('Solving model for g^4 = ' + str(g**4) + ' took ' + str(t_end-t_start) + ' seconds.')
         
     # Save growthFactors and corresponding inequality data as pkl and csv
-    with open('./ResultsAllGrowthFactors/' + Params.spec_name + '.pkl', 'w') as f:
-        pickle.dump([growthFactors, LorenzCurves, LorenzCurvesNrm,
-                     aLvlGini, aNrmGini,
-                     aLvlMeanToMedian, aNrmMeanToMedian,
-                     aLvlTop1_5_10, aNrmTop1_5_10,
-                     aLvlBottom60, aNrmBottom60], f)
+    with open('./Results/' + Params.spec_name + '.pkl', 'w') as f:
+        pickle.dump([growthFactors,
+                     LorenzCurves,
+                     LorenzCurvesNrm,
+                     aLvlGini,
+                     aNrmGini,
+                     aLvlGini24_34,
+                     aNrmGini24_34,
+                     aLvlGini35,
+                     aNrmGini35,
+                     aLvlGini35_44,
+                     aNrmGini35_44,
+                     aLvlGini45_54,
+                     aNrmGini45_54,
+                     aLvlGini55_64,
+                     aNrmGini55_64,
+                     aLvlGiniRetired,
+                     aNrmGiniRetired,
+                     aLvlMeanToMedian,
+                     aNrmMeanToMedian,
+                     aLvlTop1_5_10,
+                     aNrmTop1_5_10,
+                     aLvlBottom60,
+                     aNrmBottom60], f)
     csvdict = {'Growth' : list(np.arange(1.0, 1.1, 0.01)),
                'Gini_Lvl' : aLvlGini,
                'Gini_Lvl24_34' : aLvlGini24_34,
@@ -853,17 +872,35 @@ if Params.solve_model:
                'Bottom60_Nrm' : aNrmBottom60}
     
     df = pd.DataFrame.from_dict(csvdict)
-    df.to_csv('./ResultsAllGrowthFactors/' + Params.spec_name + '.csv')
+    df.to_csv('./Results/' + Params.spec_name + '.csv')
 
 else:
-    with open('./ResultsAllGrowthFactors/' + Params.spec_name + '.pkl') as f:
-        growthFactors, LorenzCurves, LorenzCurvesNrm, aLvlGini, aNrmGini,\
-        aLvlMeanToMedian, aNrmMeanToMedian,\
-        aLvlTop1_5_10, aNrmTop1_5_10,\
-        aLvlBottom60, aNrmBottom60 = pickle.load(f)
+    with open('./Results/' + Params.spec_name + '.pkl') as f:
+        growthFactors,\
+        LorenzCurves,\
+        LorenzCurvesNrm,\
+        aLvlGini,\
+        aNrmGini,\
+        aLvlGini24_34,\
+        aNrmGini24_34,\
+        aLvlGini35,\
+        aNrmGini35,\
+        aLvlGini35_44,\
+        aNrmGini35_44,\
+        aLvlGini45_54,\
+        aNrmGini45_54,\
+        aLvlGini55_64,\
+        aNrmGini55_64,\
+        aLvlGiniRetired,\
+        aNrmGiniRetired,\
+        aLvlMeanToMedian,\
+        aNrmMeanToMedian,\
+        aLvlTop1_5_10,\
+        aNrmTop1_5_10,\
+        aLvlBottom60,\
+        aNrmBottom60 = pickle.load(f)
     
 # Plot Lorenz curves for wealth distributions under each growth factor
-# This currently only works for do_liquid == False
 LorenzAxis = np.arange(101,dtype=float)
 fig = plt.figure()
 plt.plot(LorenzAxis, EstimationEconomy.LorenzData,'-k', linewidth=1.5,label='data')
@@ -876,7 +913,7 @@ plt.ylabel('Cumulative wealth share',fontsize=12)
 plt.ylim([-0.02,1.0])
 plt.legend(loc='upper left')
 plt.show()
-fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
+#fig.savefig('./Figures/' + 'Lorenz_' + Params.spec_name + '.pdf')
 
 # Plot Gini coefficients for each growth factor
 fig = plt.figure()
@@ -888,13 +925,29 @@ plt.legend(loc='lower right')
 plt.show()
 fig.savefig('./Figures/' + 'Gini_' + Params.spec_name + '.pdf')
 
+fig = plt.figure()
+plt.plot(np.power(growthFactors, 4), aLvlGini, '-bo', label='wealth level')
+plt.xlabel('Growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='lower right')
+plt.show()
+fig.savefig('./Figures/' + 'Gini_Lvl_' + Params.spec_name + '.pdf')
+
+fig = plt.figure()
+plt.plot(np.power(growthFactors, 4), aNrmGini, '-bo', label='wealth level')
+plt.xlabel('Growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='lower right')
+plt.show()
+fig.savefig('./Figures/' + 'Gini_Nrm_' + Params.spec_name + '.pdf')
+
 # Plot mean-to-median ratio in wealth levels for each growth factor
 fig = plt.figure()
 plt.plot(np.power(growthFactors, 4), aLvlMeanToMedian, '-bo', label='wealth level')
 plt.plot(np.power(growthFactors, 4), aNrmMeanToMedian, '-ro', label='wealth ratio')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
-plt.legend(loc='upper left')
+plt.legend(loc='lower right')
 plt.show()
 
 # Compute Gini coefficients from average Lorenz curves and plot by growth factor
@@ -911,6 +964,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='upper left')
 plt.show()
+fig.savefig('./Figures/' + 'Gini_avg_' + Params.spec_name + '.pdf')
 
 
             

@@ -3,14 +3,15 @@ library(plyr)
 library(ggplot2)
 library(ggrepel)
 
+
 setwd('/Users/andreea/Documents/phd/2ndyrpaper/HARK/cstwGrowth/Empirical')
 
 #----------------------------------------------------------------------------
 # Import inequality results from the model
 # Specification: BetaDistPYnw
 #----------------------------------------------------------------------------
-model <- read.csv('../ResultsAllGrowthFactors/BetaPointPYnw.csv')
-model <- model[, -1]
+model_agg <- read.csv('../Results/DistPYagg.csv')
+model_agg <- model_agg[, -1]
 
 #----------------------------------------------------------------------------
 # Import real GDP data from the World Bank
@@ -103,18 +104,63 @@ cs_wealth <- cs_wealth[, !(colnames(cs_wealth) %in% c('CountryName',
 cs_wealth <- cs_wealth[complete.cases(cs_wealth), ]
 cs_wealth$g16 <- ifelse(cs_wealth$CountryCode %in% g16, 1, 0)
 
+
+#---------------------------------------------------------------
+# Import WID data on wealth distributions from 1984-2014
+# Countries: China, France, USA
+#---------------------------------------------------------------
+
+## Get wealth share of top percentiles
+# The variable we want to keep is 'Net personal wealth | equal-split adults | Share | Adults | share of total (ratio)'
+# The code of this variable is 'shweal992j'
+wid_cn <- read.csv('./wid_wealth/WID_CN_InequalityData.csv', header=FALSE)
+wid_cn <- wid_cn[9:NROW(wid_cn), c(3, 4, grep('shweal992j', llply(wid_cn[8,], as.character)))]
+colnames(wid_cn) <- c('year', 'percentile', 'wealth_share')
+wid_cn$wealth_share <- llply(wid_cn$wealth_share, as.character)
+wid_cn$wealth_share <- llply(wid_cn$wealth_share, as.numeric)
+wid_cn <- wid_cn[wid_cn$year %in% c(2014, 1984), ]
+
+wid_fr <- read.csv('./wid_wealth/WID_FR_InequalityData.csv', header=FALSE)
+wid_fr <- wid_fr[9:NROW(wid_fr), c(3, 4, grep('shweal992j', llply(wid_fr[8,], as.character)))]
+colnames(wid_fr) <- c('year', 'percentile', 'wealth_share')
+wid_fr$wealth_share <- llply(wid_fr$wealth_share, as.character)
+wid_fr$wealth_share <- llply(wid_fr$wealth_share, as.numeric)
+wid_fr <- wid_fr[wid_fr$year %in% c(2014, 1984), ]
+
+wid_us <- read.csv('./wid_wealth/WID_US_InequalityData.csv', header=FALSE)
+wid_us <- wid_us[9:NROW(wid_us), c(3, 4, grep('shweal992j', llply(wid_us[8,], as.character)))]
+colnames(wid_us) <- c('year', 'percentile', 'wealth_share')
+wid_us$wealth_share <- llply(wid_us$wealth_share, as.character)
+wid_us$wealth_share <- llply(wid_us$wealth_share, as.numeric)
+wid_us <- wid_us[wid_us$year %in% c(2014, 1984), ]
+
+
+
 #-------------------------------
 # Plot OECD data
 #-------------------------------
 
 # Plot mean-to-median ratio of net wealth by GDP growth rate
+pdf('m2m_data.pdf')
 ggplot(oecd_wealth[oecd_wealth$VAR=='M2MR',], aes(x=GDP_growth, y=Value)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) +
   theme_minimal() +
   labs(x='Annual GDP growth rate', y='Mean-to-median ratio of net wealth', 
-       title='Mean-to-median ratio of net wealth by GDP growth rate over 30 years')
+       title='Mean-to-median ratio of net wealth')
+dev.off()
+
+tmp <- oecd_wealth[oecd_wealth$VAR=='M2MR',]
+pdf('m2m_data_model.pdf')
+plot(tmp$GDP_growth, tmp$Value, pch=16,
+     xlab='Annual GDP growth rate',
+     ylab='Mean-to-median ratio of net wealth',
+     main='Mean-to-median ratio of net wealth')
+abline(lm(tmp$Value~tmp$GDP_growth), col='black', lwd=2)
+lines(model_agg$Growth-1, model_agg$M2M_Lvl, type='o', pch=16, col='red', lwd=2)
+legend('topright', legend=c('data', 'model'), col=c('black', 'red'), pch=16, ncol=2, cex=0.7)
+dev.off()
 
 # Plot mean-to-median ratio of net wealth by GDP growth rate for a subset of countries
 ggplot(oecd_wealth[oecd_wealth$VAR=='M2MR' & oecd_wealth$g16==1,], aes(x=GDP_growth, y=Value)) +
@@ -125,12 +171,26 @@ ggplot(oecd_wealth[oecd_wealth$VAR=='M2MR' & oecd_wealth$g16==1,], aes(x=GDP_gro
        title='Mean-to-median ratio of net wealth by GDP growth rate over 30 years')
 
 # Plot wealth share of top 1% by GDP growth rate
+pdf('top1_data.pdf')
 ggplot(oecd_wealth[oecd_wealth$VAR=='ST1',], aes(x=GDP_growth, y=Value/100)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + 
+  theme_minimal() +
   labs(x='Annual GDP growth rate', y='Wealth share', 
-       title='Wealth share of the top 1% by GDP growth rate over 30 years')
+       title='Wealth share of the top 1%')
+dev.off()
+
+tmp <- oecd_wealth[oecd_wealth$VAR=='ST1',]
+pdf('top1_data_model.pdf')
+plot(tmp$GDP_growth, tmp$Value/100, pch=16,
+     xlab='Annual GDP growth rate',
+     ylab='Wealth share',
+     main='Wealth share of the top 1%')
+abline(lm(tmp$Value/100~tmp$GDP_growth), col='black', lwd=2)
+lines(model_agg$Growth-1, model_agg$Top1_Lvl, type='o', pch=16, col='red', lwd=2)
+legend('topright', legend=c('data', 'model'), col=c('black', 'red'), pch=16, ncol=2, cex=0.7)
+dev.off()
 
 # Plot wealth share of top 1% by GDP growth rate for a subset of countries
 ggplot(oecd_wealth[oecd_wealth$VAR=='ST1' & oecd_wealth$g16==1,], aes(x=GDP_growth, y=Value/100)) +
@@ -141,36 +201,89 @@ ggplot(oecd_wealth[oecd_wealth$VAR=='ST1' & oecd_wealth$g16==1,], aes(x=GDP_grow
        title='Wealth share of the top 1% by GDP growth rate over 30 years')
 
 # Plot wealth share of top 5% by GDP growth rate
+pdf('top5_data.pdf')
 ggplot(oecd_wealth[oecd_wealth$VAR=='ST5',], aes(x=GDP_growth, y=Value/100)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + 
+  theme_minimal() +
   labs(x='Annual GDP growth rate', y='Wealth share', 
-       title='Wealth share of the top 5% by GDP growth rate over 30 years')
+       title='Wealth share of the top 5%')
+dev.off()
+
+tmp <- oecd_wealth[oecd_wealth$VAR=='ST5',]
+pdf('top5_data_model.pdf')
+plot(tmp$GDP_growth, tmp$Value/100, pch=16,
+     xlab='Annual GDP growth rate',
+     ylab='Wealth share',
+     main='Wealth share of the top 5%')
+abline(lm(tmp$Value/100~tmp$GDP_growth), col='black', lwd=2)
+lines(model_agg$Growth-1, model_agg$Top5_Lvl, type='o', pch=16, col='red', lwd=2)
+legend('topright', legend=c('data', 'model'), col=c('black', 'red'), pch=16, ncol=2, cex=0.7)
+dev.off()
 
 # Plot wealth share of top 5% by GDP growth rate for a subset of countries
 ggplot(oecd_wealth[oecd_wealth$VAR=='ST5' & oecd_wealth$g16==1,], aes(x=GDP_growth, y=Value/100)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + 
+  theme_minimal() +
   labs(x='Annual GDP growth rate', y='Wealth share', 
        title='Wealth share of the top 5% by GDP growth rate over 30 years')
 
 # Plot wealth share of top 10% by GDP growth rate
+pdf('top10_data.pdf')
 ggplot(oecd_wealth[oecd_wealth$VAR=='ST10',], aes(x=GDP_growth, y=Value/100)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + 
+  theme_minimal() +
   labs(x='Annual GDP growth rate', y='Wealth share', 
-       title='Wealth share of the top 10% by GDP growth rate over 30 years')
+       title='Wealth share of the top 10%')
+dev.off()
+
+tmp <- oecd_wealth[oecd_wealth$VAR=='ST10',]
+pdf('top10_data_model.pdf')
+plot(tmp$GDP_growth, tmp$Value/100, pch=16,
+     xlab='Annual GDP growth rate',
+     ylab='Wealth share',
+     main='Wealth share of the top 10%')
+abline(lm(tmp$Value/100~tmp$GDP_growth), col='black', lwd=2)
+lines(model_agg$Growth-1, model_agg$Top10_Lvl, type='o', pch=16, col='red', lwd=2)
+legend('topright', legend=c('data', 'model'), col=c('black', 'red'), pch=16, ncol=2, cex=0.7)
+dev.off()
 
 # Plot wealth share of top 10% by GDP growth rate for a subset of countries
 ggplot(oecd_wealth[oecd_wealth$VAR=='ST10' & oecd_wealth$g16==1,], aes(x=GDP_growth, y=Value/100)) +
   geom_point() +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + 
+  theme_minimal() +
   labs(x='Annual GDP growth rate', y='Wealth share', 
        title='Wealth share of the top 10% by GDP growth rate over 30 years')
+
+# Plot wealth share of bottom 60% by GDP growth rate
+pdf('bot60_data.pdf')
+ggplot(oecd_wealth[oecd_wealth$VAR=='SB60',], aes(x=GDP_growth, y=Value/100)) +
+  geom_point() +
+  geom_label_repel(aes(label=COUNTRY)) +
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + 
+  theme_minimal() +
+  labs(x='Annual GDP growth rate', y='Wealth share', 
+       title='Wealth share of the bottom 60%')
+dev.off()
+
+tmp <- oecd_wealth[oecd_wealth$VAR=='SB60',]
+pdf('bot60_data_model.pdf')
+plot(tmp$GDP_growth, tmp$Value/100, pch=16,
+     xlab='Annual GDP growth rate',
+     ylab='Wealth share',
+     main='Wealth share of the bottom 60%')
+abline(lm(tmp$Value/100~tmp$GDP_growth), col='black', lwd=2)
+lines(model_agg$Growth-1, model_agg$Bottom60_Lvl, type='o', pch=16, col='red', lwd=2)
+legend('topright', legend=c('data', 'model'), col=c('black', 'red'), pch=16, ncol=2, cex=0.7)
+dev.off()
+
 
 
 #-------------------------------
@@ -184,7 +297,7 @@ ggplot(cs_wealth, aes(x=GDP_84_14, y=Gini/100)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) +
   theme_minimal() +
   labs(x='Annual GDP growth rate', y='Gini coefficient of net wealth', 
-       title='Gini coefficient of net wealth by GDP growth rate over 30 years') +
+       title='Gini coefficient of net wealth by GDP growth rate over 30 years')
 
 # Plot mean-to-median ratio of net wealth by GDP growth rate for a subset of countries
 ggplot(cs_wealth[cs_wealth$g16==1,], aes(x=GDP_84_14, y=Gini/100)) +
