@@ -13,6 +13,9 @@ setwd('/Users/andreea/Documents/phd/2ndyrpaper/HARK/cstwGrowth/Empirical')
 model_agg <- read.csv('../Results/DistPYagg.csv')
 model_agg <- model_agg[, -1]
 
+model_perm <- read.csv('../Results/DistPYperm.csv')
+model_perm <- model_perm[, -1]
+
 #----------------------------------------------------------------------------
 # Import real GDP data from the World Bank
 # https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
@@ -65,6 +68,21 @@ oecd_wealth <- oecd_wealth[complete.cases(oecd_wealth), ]
 g16 <- c('DNK', 'CZE', 'NOR', 'FIN', 'SWE', 'HUN', 'DEU', 'LUX', 'CAN', 'AUS', 'ITA', 'NZL', 'JPN', 
          'GBR', 'ISR', 'USA')
 oecd_wealth$g16 <- ifelse(oecd_wealth$COUNTRY %in% g16, 1, 0)
+
+# Make dataset with  country code and growth
+oecd_ctrygrowth <- ddply(oecd_wealth, .(COUNTRY), summarise, GDP_growth = GDP_growth[1])
+
+# Compute ratio of bottom 90% to bottom 60%
+oecd_bot60 <- oecd_wealth[oecd_wealth$VAR=='SB60', colnames(oecd_wealth) %in% c('COUNTRY', 'Value')]
+colnames(oecd_bot60)[2] <- 'SB60'
+
+oecd_bot90 <- oecd_wealth[oecd_wealth$VAR=='ST10', colnames(oecd_wealth) %in% c('COUNTRY', 'Value')]
+oecd_bot90$Value <- 100-oecd_bot90$Value
+colnames(oecd_bot90)[2] <- 'SB90'
+
+oecd_bot90_60 <- merge(oecd_bot90, oecd_bot60, by='COUNTRY')
+oecd_bot90_60$SB90_60 <- oecd_bot90_60$SB90 / oecd_bot90_60$SB60
+oecd_bot90_60 <- merge(oecd_bot90_60, oecd_ctrygrowth, by='COUNTRY')
 
 #--------------------------------------------------------------------------
 # Import wealth Gini data from Credit Suisse Global Wealth Databook 2017
@@ -140,6 +158,15 @@ wid_us <- wid_us[wid_us$year %in% c(2014, 1984), ]
 # Plot OECD data
 #-------------------------------
 
+# Plot ratio of wealth shares of bottom 90% to bottom 60% by GDP growth rate
+ggplot(oecd_bot90_60, aes(x=GDP_growth, y=SB90_60)) +
+  geom_point() +
+  geom_label_repel(aes(label=COUNTRY)) +
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE) +
+  theme_minimal() +
+  labs(x='Annual GDP growth rate', y='Bottom 90% / Bottom 60%', 
+       title='Ratio of wealth shares of bottom 90% to bottom 60%')
+
 # Plot mean-to-median ratio of net wealth by GDP growth rate
 pdf('m2m_data.pdf')
 ggplot(oecd_wealth[oecd_wealth$VAR=='M2MR',], aes(x=GDP_growth, y=Value)) +
@@ -147,16 +174,16 @@ ggplot(oecd_wealth[oecd_wealth$VAR=='M2MR',], aes(x=GDP_growth, y=Value)) +
   geom_label_repel(aes(label=COUNTRY)) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE) +
   theme_minimal() +
-  labs(x='Annual GDP growth rate', y='Mean-to-median ratio of net wealth', 
-       title='Mean-to-median ratio of net wealth')
+  labs(x='Annual GDP growth rate', y='Mean-to-median ratio of net worth', 
+       title='Mean-to-median ratio of net worth')
 dev.off()
 
 tmp <- oecd_wealth[oecd_wealth$VAR=='M2MR',]
 pdf('m2m_data_model.pdf')
 plot(tmp$GDP_growth, tmp$Value, pch=16,
      xlab='Annual GDP growth rate',
-     ylab='Mean-to-median ratio of net wealth',
-     main='Mean-to-median ratio of net wealth')
+     ylab='Mean-to-median ratio of net worth',
+     main='Mean-to-median ratio of net worth')
 abline(lm(tmp$Value~tmp$GDP_growth), col='black', lwd=2)
 lines(model_agg$Growth-1, model_agg$M2M_Lvl, type='o', pch=16, col='red', lwd=2)
 legend('topright', legend=c('data', 'model'), col=c('black', 'red'), pch=16, ncol=2, cex=0.7)
@@ -307,5 +334,22 @@ ggplot(cs_wealth[cs_wealth$g16==1,], aes(x=GDP_84_14, y=Gini/100)) +
   theme_minimal() + 
   labs(x='Annual GDP growth rate', y='Gini coefficient of net wealth', 
        title='Gini coefficient of net wealth by GDP growth rate over 30 years')
+
+
+#-----------------------------------------
+# Plot WID.world gini data
+#-----------------------------------------
+
+# us_dgini84_14 <- 0.859044206138 - 0.783020385217
+# fr_dgini84_14 <- 0.694574152428 - 0.642112571394
+# cn_dgini84_14 <- 0.749428254053 - 0.535917715168
+# ru_dgini95_14 <- 0.80940773114 - 0.666334643255
+# dginis <- c(us_dgini84_14, fr_dgini84_14, cn_dgini84_14, ru_dgini95_14)
+# 
+# us_dgrowth <- (gdp_raw$X2014[250]/gdp_raw$X1984[250])^(1/30) - (gdp_raw$X1984[250]/gdp_raw$X1960[250])^(1/24)
+# fr_dgrowth <- (gdp_raw$X2014[76]/gdp_raw$X1984[76])^(1/30) - (gdp_raw$X1984[76]/gdp_raw$X1960[76])^(1/24)
+# 
+
+
 
 

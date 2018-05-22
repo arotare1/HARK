@@ -934,7 +934,7 @@ plt.show()
 fig.savefig('./Figures/' + 'Gini_Lvl_' + Params.spec_name + '.pdf')
 
 fig = plt.figure()
-plt.plot(np.power(growthFactors, 4), aNrmGini, '-bo', label='wealth level')
+plt.plot(np.power(growthFactors, 4), aNrmGini, '-bo', label='wealth ratio')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='lower right')
@@ -949,6 +949,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
+fig.savefig('./Figures/' + 'M2M_' + Params.spec_name + '.pdf')
 
 # Compute Gini coefficients from average Lorenz curves and plot by growth factor
 avg_aLvlGini = []
