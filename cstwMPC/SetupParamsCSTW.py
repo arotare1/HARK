@@ -7,12 +7,12 @@ from copy import  deepcopy
 import os
 
 # Choose percentiles of the data to match and which estimation to run
-spec_name = 'BetaDistPY'
+spec_name = 'BetaDistPY_highTFPgrowth' # high=1.045^0.25; low = 1.015^0.25
 param_name = 'DiscFac'        # Which parameter to introduce heterogeneity in
 dist_type = 'uniform'         # Which type of distribution to use
 do_lifecycle = False          # Use lifecycle model if True, perpetual youth if False
-do_param_dist = False         # Do param-dist version if True, param-point if False
-run_estimation = True         # Runs the estimation if True
+do_param_dist = True         # Do param-dist version if True, param-point if False
+run_estimation = False         # Runs the estimation if True
 find_beta_vs_KY = False       # Computes K/Y ratio for a wide range of beta; should have do_beta_dist = False
 do_sensitivity = [False, False, False, False, False, False, False, False] # Choose which sensitivity analyses to run: rho, xi_sigma, psi_sigma, mu, urate, mortality, g, R
 do_liquid = False             # Matches liquid assets data when True, net worth data when False
@@ -76,7 +76,7 @@ aNrmInitStd  = 0.5            # log initial wealth/income standard deviation
 
 # Set population macro parameters
 PopGroFac = 1.01**(0.25)      # Population growth rate
-PermGroFacAgg = 1.015**(0.25) # TFP growth rate
+PermGroFacAgg = 1.045**(0.25) # TFP growth rate
 d_pct = 0.11                  # proportion of HS dropouts
 h_pct = 0.55                  # proportion of HS graduates
 c_pct = 0.34                  # proportion of college graduates
@@ -216,7 +216,7 @@ adj_college = {"PermGroFac":PermGroFac_c,"LivPrb":LivPrb_c,'pLvlInitMean':pLvlIn
 init_infinite = {"CRRA":CRRA,
                 "Rfree":1.01/LivPrb_i[0],
                 "PermGroFac":PermGroFac_i,
-                "PermGroFacAgg":1.0,
+                "PermGroFacAgg":PermGroFacAgg,
                 "BoroCnstArt":BoroCnstArt,
                 "CubicBool":CubicBool,
                 "vFuncBool":vFuncBool,
@@ -275,6 +275,8 @@ aggregate_params = {'PermShkAggCount': PermShkAggCount,
                     'TranShkAggCount': TranShkAggCount,
                     'PermShkAggStd': PermShkAggStd,
                     'TranShkAggStd': TranShkAggStd,
+                    # Add PermGroFacAgg as attribute of market (o.w. version with aggregate shocks won't work)
+                    "PermGroFacAgg":PermGroFacAgg,
                     'DeprFac': DeprFac,
                     'CapShare': CapShare,
                     'AggregateL':(1.0-UnempPrb)*IndL,

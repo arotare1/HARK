@@ -1,0 +1,52 @@
+Estimate is center=0.984578707354, spread=0.0100925145613
+Lorenz distance is 6.635638281459196
+Average MPC for all consumers is 0.265
+Average MPC in the top percentile of W/Y is 0.052
+Average MPC in the top decile of W/Y is 0.057
+Average MPC in the top quintile of W/Y is 0.061
+Average MPC in the second quintile of W/Y is 0.095
+Average MPC in the middle quintile of W/Y is 0.229
+Average MPC in the fourth quintile of W/Y is 0.353
+Average MPC in the bottom quintile of W/Y is 0.589
+Average MPC in the top percentile of y is 0.241
+Average MPC in the top decile of y is 0.251
+Average MPC in the top quintile of y is 0.263
+Average MPC in the second quintile of y is 0.287
+Average MPC in the middle quintile of y is 0.247
+Average MPC in the fourth quintile of y is 0.238
+Average MPC in the bottom quintile of y is 0.292
+Average MPC for the employed is 0.255
+Average MPC for the unemployed is 0.410
+Average MPC for the retired is nan
+Of the population with the 1/3 highest MPCs...
+47.626% are in the bottom wealth quintile,
+36.436% are in the second wealth quintile,
+14.712% are in the third wealth quintile,
+1.224% are in the fourth wealth quintile,
+and 0.002% are in the top wealth quintile.
+LorenzSim = [0.00000000e+00 1.76960982e-05 1.00224522e-04 2.34942387e-04
+ 4.16575075e-04 6.43128655e-04 9.13757306e-04 1.22666919e-03
+ 1.57572717e-03 1.95824403e-03 2.37688938e-03 2.83441405e-03
+ 3.33230803e-03 3.87050085e-03 4.44850874e-03 5.06661307e-03
+ 5.72573562e-03 6.42657405e-03 7.16912895e-03 7.95360683e-03
+ 8.78014313e-03 9.64887785e-03 1.05602605e-02 1.15149251e-02
+ 1.25135529e-02 1.35564674e-02 1.46441799e-02 1.57770744e-02
+ 1.69555749e-02 1.81800619e-02 1.94512466e-02 2.07698266e-02
+ 2.21364847e-02 2.35522197e-02 2.50176629e-02 2.65340098e-02
+ 2.81022588e-02 2.97234820e-02 3.13988655e-02 3.31294609e-02
+ 3.49167141e-02 3.67619693e-02 3.86667848e-02 4.06329475e-02
+ 4.26623957e-02 4.47571057e-02 4.69195991e-02 4.91522069e-02
+ 5.14579907e-02 5.38404079e-02 5.63021718e-02 5.88470606e-02
+ 6.14788586e-02 6.42018894e-02 6.70211992e-02 6.99431382e-02
+ 7.29739574e-02 7.61207493e-02 7.93902365e-02 8.27917074e-02
+ 8.63346796e-02 9.00303629e-02 9.38924156e-02 9.79348269e-02
+ 1.02174014e-01 1.06628748e-01 1.11320418e-01 1.16274923e-01
+ 1.21522209e-01 1.27097951e-01 1.33043656e-01 1.39408666e-01
+ 1.46258372e-01 1.53669234e-01 1.61715097e-01 1.70482185e-01
+ 1.80043179e-01 1.90454395e-01 2.01782469e-01 2.14088194e-01
+ 2.27401653e-01 2.41775113e-01 2.57277423e-01 2.73973267e-01
+ 2.91940480e-01 3.11274823e-01 3.32105501e-01 3.54589929e-01
+ 3.78923583e-01 4.05299160e-01 4.33949086e-01 4.65138084e-01
+ 4.99180750e-01 5.36401164e-01 5.77195393e-01 6.22237441e-01
+ 6.72434689e-01 7.29128444e-01 7.94476572e-01 8.74265970e-01
+ 1.00000000e+00]

@@ -23,6 +23,7 @@ from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
 from scipy.optimize import golden, brentq
 import matplotlib.pyplot as plt
 #import csv
+import pdb
 
 mystr = lambda number : "{:.3f}".format(number)
 
@@ -82,7 +83,8 @@ class cstwMPCmarket(EstimationMarketClass):
     reap_vars = ['aLvlNow','pLvlNow','MPCnow','TranShkNow','EmpNow','t_age']
     sow_vars  = [] # Nothing needs to be sent back to agents in the idiosyncratic shocks version
     const_vars = ['LorenzBool','ManyStatsBool']
-    track_vars = ['MaggNow','AaggNow','KtoYnow','Lorenz','LorenzLong','MPCall','MPCretired','MPCemployed','MPCunemployed','MPCbyIncome','MPCbyWealthRatio','HandToMouthPct']
+    track_vars = ['MaggNow','AaggNow','KtoYnow','Lorenz','LorenzLong','LorenzNrm','LorenzNrmLong',
+                  'MPCall','MPCretired','MPCemployed','MPCunemployed','MPCbyIncome','MPCbyWealthRatio','HandToMouthPct']
     dyn_vars = [] # No dynamics in the idiosyncratic shocks version
     
     def __init__(self,**kwds):
@@ -163,16 +165,22 @@ class cstwMPCmarket(EstimationMarketClass):
         
         # Store Lorenz data if requested
         self.LorenzLong = np.nan
+        self.LorenzNrmLong = np.nan
         if LorenzBool:
             order = np.argsort(aLvl)
             aLvl = aLvl[order]
+            aNrm = aLvl/pLvl[order] # aNrm itself will not be sorted so presorted=False for getting Lorenz shares of the wealth to income ratio
             CohortWeight = CohortWeight[order]
             wealth_shares = getLorenzShares(aLvl,weights=CohortWeight,percentiles=self.LorenzPercentiles,presorted=True)
+            wealth_ratio_shares = getLorenzShares(aNrm,weights=CohortWeight,percentiles=self.LorenzPercentiles,presorted=False)
             self.Lorenz = wealth_shares
+            self.LorenzNrm = wealth_ratio_shares
             if ManyStatsBool:
-                self.LorenzLong = getLorenzShares(aLvl,weights=CohortWeight,percentiles=np.arange(0.01,1.0,0.01),presorted=True)                
+                self.LorenzLong = getLorenzShares(aLvl,weights=CohortWeight,percentiles=np.arange(0.01,1.0,0.01),presorted=True) 
+                self.LorenzNrmLong = getLorenzShares(aNrm,weights=CohortWeight,percentiles=np.arange(0.01,1.0,0.01),presorted=False) 
         else:
             self.Lorenz = np.nan # Store nothing if we don't want Lorenz data
+            self.LorenzNrm = np.nan
             
         # Calculate a whole bunch of statistics if requested
         if ManyStatsBool:
@@ -338,8 +346,15 @@ class cstwMPCmarket(EstimationMarketClass):
         LorenzAxis = np.arange(101,dtype=float)
         plt.plot(LorenzAxis,self.LorenzData,'-k',linewidth=1.5)
         plt.plot(LorenzAxis,LorenzSim,'--k',linewidth=1.5)
-        plt.xlabel('Income percentile',fontsize=12)
+        plt.xlabel('Wealth percentile',fontsize=12)
         plt.ylabel('Cumulative wealth share',fontsize=12)
+        plt.ylim([-0.02,1.0])
+        plt.show()
+        
+        LorenzNrmSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzNrmLong_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
+        plt.plot(LorenzAxis,LorenzNrmSim,'--k',linewidth=1.5)
+        plt.xlabel('Wealth ratio percentile',fontsize=12)
+        plt.ylabel('Cumulative wealth ratio share',fontsize=12)
         plt.ylim([-0.02,1.0])
         plt.show()
         
@@ -370,6 +385,8 @@ class cstwMPCmarket(EstimationMarketClass):
         results_string += mystr(HandToMouthPct[2]*100) + '% are in the third wealth quintile,' + '\n'
         results_string += mystr(HandToMouthPct[3]*100) + '% are in the fourth wealth quintile,' + '\n'
         results_string += 'and ' + mystr(HandToMouthPct[4]*100) + '% are in the top wealth quintile.' + '\n'
+        results_string += 'LorenzSim = ' + str(LorenzSim) + '\n'
+        results_string += 'LorenzNrmSim = ' + str(LorenzNrmSim) + '\n'
         print(results_string)
         
         # Save results to disk
@@ -495,7 +512,8 @@ def calcStationaryAgeDstn(LivPrb,terminal_period):
     return AgeDstn
     
 ####################################################################################################     
-    
+
+
 if __name__ == '__main__':
     
     # Set targets for K/Y and the Lorenz curve based on the data
@@ -531,6 +549,8 @@ if __name__ == '__main__':
             PerpetualYouthType = cstwMPCagent(**Params.init_agg_shocks)
         else:
             PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
+            # Add PermGroFacAgg to time_inv
+            # PerpetualYouthType.addToTimeInv('PermGroFacAgg')
         PerpetualYouthType.AgeDstn = np.array(1.0)
         EstimationAgentList = []
         for n in range(Params.pref_type_count):
@@ -599,17 +619,19 @@ if __name__ == '__main__':
             center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
             spread_estimate = 0.0
             t_end = clock()
-            
-        # Display statistics about the estimated model
-        #center_estimate = 0.986609223266
-        #spread_estimate = 0.00853886395698
-        EstimationEconomy.LorenzBool = True
-        EstimationEconomy.ManyStatsBool = True
-        EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
-        EstimationEconomy.solve()
-        EstimationEconomy.calcLorenzDistance()
-        print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
-        EstimationEconomy.center_estimate = center_estimate
-        EstimationEconomy.spread_estimate = spread_estimate
-        EstimationEconomy.showManyStats(Params.spec_name)
+    else:
+        center_estimate = 0.9845787073542119 # from BetaDistPY baseline calibration
+        spread_estimate = 0.01009251456130123 # from BetaDistPY baseline calibration
+        
+    EstimationEconomy.LorenzBool = True
+    EstimationEconomy.ManyStatsBool = True
+    EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
+    
+    pdb.set_trace()
+    EstimationEconomy.solve()
+    EstimationEconomy.calcLorenzDistance()
+    print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate))# + ', took ' + str(t_end-t_start) + ' seconds.')
+    EstimationEconomy.center_estimate = center_estimate
+    EstimationEconomy.spread_estimate = spread_estimate
+    EstimationEconomy.showManyStats(Params.spec_name)
             
