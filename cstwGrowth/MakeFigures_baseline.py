@@ -11,10 +11,10 @@ import pandas as pd
 import SetupParams as Params
 from cstwGrowth import getLorenzShares, getGini
 
-pdb.set_trace()
+#pdb.set_trace()
 
 
-Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 
@@ -113,7 +113,7 @@ plt.axvline(x=baseline_growth)
 plt.title('Gini coefficient for wealth-to-income ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
-plt.legend(loc='lower right')
+plt.legend(loc='upper right')
 plt.show()
 fig.savefig('./Figures/Baseline/' + 'Gini_Nrm_' + Params.spec_name + '.pdf')
 
@@ -165,7 +165,7 @@ plt.axvline(x=baseline_growth)
 plt.title('Wealth-to-income ratio shares')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Wealth share',fontsize=12)
-plt.legend(loc='lower right')
+plt.legend(loc='upper right')
 plt.show()
 fig.savefig('./Figures/Baseline/' + 'Top_Nrm_' + Params.spec_name + '.pdf')
 
@@ -181,7 +181,7 @@ plt.axvline(x=baseline_growth)
 plt.title('Wealth levels percentile ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Ratio',fontsize=12)
-plt.legend(loc='lower right')
+plt.legend(loc='upper left')
 plt.show()
 fig.savefig('./Figures/Baseline/' + 'PrcRatios_Lvl_' + Params.spec_name + '.pdf')
 
@@ -197,7 +197,7 @@ plt.axvline(x=baseline_growth)
 plt.title('Wealth-to-income percentile ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Ratio',fontsize=12)
-plt.legend(loc='lower right')
+plt.legend(loc='upper right')
 plt.show()
 fig.savefig('./Figures/Baseline/' + 'PrcRatios_Nrm_' + Params.spec_name + '.pdf')
 

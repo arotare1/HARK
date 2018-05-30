@@ -92,7 +92,7 @@ class cstwMPCmarket(EstimationMarketClass):
                   'LorenzLvl','LorenzLongLvl', 'LorenzLongNrm',
                   'aLvlGini', 'aNrmGini',
                   'aLvlMeanToMedian', 'aNrmMeanToMedian',
-                  'aLvlPercentiles, aNrmPercentiles']
+                  'aLvlPercentiles', 'aNrmPercentiles']
     dyn_vars = [] # No dynamics in the idiosyncratic shocks version
     
     def __init__(self,**kwds):
@@ -315,8 +315,8 @@ class cstwMPCmarket(EstimationMarketClass):
         self.aNrmGiniSim = np.mean(self.aNrmGini_hist[self.ignore_periods:])
         self.aLvlMeanToMedianSim = np.mean(self.aLvlMeanToMedian_hist[self.ignore_periods:])
         self.aNrmMeanToMedianSim = np.mean(self.aNrmMeanToMedian_hist[self.ignore_periods:])
-        self.aLvlPercentilesSim = np.hstack(np.mean(np.array(self.aLvlPercentilesSim_hist)[self.ignore_periods:,:],axis=0))
-        self.aNrmPercentilesSim = np.hstack(np.mean(np.array(self.aNrmPercentilesSim_hist)[self.ignore_periods:,:],axis=0))
+        self.aLvlPercentilesSim = np.hstack(np.mean(np.array(self.aLvlPercentiles_hist)[self.ignore_periods:,:],axis=0))
+        self.aNrmPercentilesSim = np.hstack(np.mean(np.array(self.aNrmPercentiles_hist)[self.ignore_periods:,:],axis=0))
 
                      
         # Make a string of results to display
@@ -484,10 +484,8 @@ def getGini(data,weights=None,presorted=False):
 ###############################################################################
 
 if __name__ == '__main__':
-    
-    pdb.set_trace()
 
-    Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+    Params.do_param_dist = True     # Do param-dist version if True, param-point if False
     Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
     Params.run_estimation = False   # Set to False to use previously computed estimates from ParamsEstimates
     Params.solve_model = True      # Set to False to use previously computed LorenzCurves for particular growthFactors
@@ -637,6 +635,7 @@ if __name__ == '__main__':
         EstimationEconomy.spread_estimate = spread_estimate 
     
     if Params.solve_model:  # Solve the model
+        #pdb.set_trace()
         EstimationEconomy.LorenzBool = True
         EstimationEconomy.ManyStatsBool = True
         EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
