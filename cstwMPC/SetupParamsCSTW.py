@@ -7,7 +7,7 @@ from copy import  deepcopy
 import os
 
 # Choose percentiles of the data to match and which estimation to run
-spec_name = 'BetaDistPY'
+spec_name = 'BetaPointPY'
 param_name = 'DiscFac'        # Which parameter to introduce heterogeneity in
 dist_type = 'uniform'         # Which type of distribution to use
 do_lifecycle = False          # Use lifecycle model if True, perpetual youth if False

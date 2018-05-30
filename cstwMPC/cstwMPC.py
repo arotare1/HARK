@@ -18,7 +18,7 @@ from HARKutilities import approxMeanOneLognormal, combineIndepDstns, approxUnifo
 from HARKsimulation import drawDiscrete
 from HARKcore import Market
 #from HARKparallel import multiThreadCommandsFake
-import newParams as Params
+import SetupParamsCSTW as Params
 import ConsIndShockModel as Model
 from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
 from scipy.optimize import golden, brentq
@@ -503,6 +503,8 @@ def calcStationaryAgeDstn(LivPrb,terminal_period):
     return AgeDstn
     
 if __name__ == '__main__':
+    
+    pdb.set_trace()
     
     # Set targets for K/Y and the Lorenz curve based on the data
     if Params.do_liquid:

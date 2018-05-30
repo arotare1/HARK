@@ -85,7 +85,7 @@ TypeWeight_lifecycle = [d_pct,h_pct,c_pct]
 
 # Set indiividual parameters for the infinite horizon model
 IndL = 10.0/9.0               # Labor supply per individual (constant)
-PermGroFac_i = [1.000**0.25]  # Permanent income growth factor (no perm growth)
+PermGroFac_i = [1.000**0.25]   # Permanent income growth factor
 DiscFac_i = 0.97              # Default intertemporal discount factor
 LivPrb_i = [1.0 - 1.0/160.0]  # Survival probability
 PermShkStd_i = [(0.01*4/11)**0.5] # Standard deviation of permanent shocks to income
