@@ -485,7 +485,7 @@ def getGini(data,weights=None,presorted=False):
 
 if __name__ == '__main__':
 
-    Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+    Params.do_param_dist = False     # Do param-dist version if True, param-point if False
     Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
     Params.run_estimation = False   # Set to False to use previously computed estimates from ParamsEstimates
     Params.solve_model = True      # Set to False to use previously computed LorenzCurves for particular growthFactors
@@ -650,6 +650,7 @@ if __name__ == '__main__':
         aLvlPercentilesSim = []
         aNrmPercentilesSim = []
         
+        pdb.set_trace()
         for i in range(len(growthFactors)):
             annual_g = annual_growthFactors[i]
             g = growthFactors[i]
@@ -660,8 +661,8 @@ if __name__ == '__main__':
                     NewEstimationEconomy.agents[j].PermGroFac = [i*g for i in EstimationEconomy.agents[j].PermGroFac]
                 else:
                     NewEstimationEconomy.agents[j].PermGroFac = [g]
+                    #NewEstimationEconomy.agents[j].update()
             
-            pdb.set_trace()
             t_start = clock()
             NewEstimationEconomy.solve()
             t_end = clock()

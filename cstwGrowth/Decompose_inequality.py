@@ -19,15 +19,15 @@ import pandas as pd
 import SetupParams as Params
 from cstwGrowth import cstwMPCagent, calcStationaryAgeDstn, cstwMPCmarket, getGini
 
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 Params.do_simulation = True     # Runs simulation if True
-Params.PermGroFac_i = 1.0       # 1.0 for baseline, 1.03**0.25 for high initial growth
+initial_growth = 1.0       # 1.0 for baseline, 1.03**0.25 for high initial growth
 
 Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 
-path_initial_growth = 'Baseline/' if Params.PermGroFac_i == 1 else 'High_initial_growth/'
+path_initial_growth = 'Baseline/' if initial_growth == 1 else 'High_initial_growth/'
 
 #------------------------------------------------------------------------------------------
 # Step 1. Load inequality data for the case when agents update their consumption rule
@@ -76,6 +76,7 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
     # Make AgentTypes
     if Params.do_lifecycle:
         DropoutType = cstwMPCagent(**Params.init_dropout)
+        DropoutType.PermGroFac = [initial_growth]
         DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
         HighschoolType = deepcopy(DropoutType)
         HighschoolType(**Params.adj_highschool)
@@ -94,8 +95,10 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
     else:
         if Params.do_agg_shocks:
             PerpetualYouthType = cstwMPCagent(**Params.init_agg_shocks)
+            PerpetualYouthType.PermGroFac = [initial_growth]
         else:
             PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
+            PerpetualYouthType.PermGroFac = [initial_growth]
         PerpetualYouthType.AgeDstn = np.array(1.0)
         EstimationAgentList = []
         for n in range(Params.pref_type_count):
@@ -132,6 +135,7 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
     EstimationEconomy.ManyStatsBool = True
     EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,
                                        center_estimate,spread_estimate,Params.dist_type)
+    
     EstimationEconomy.solveAgents()
     
     # Initialize inequality data to be filled during simulation
