@@ -487,7 +487,7 @@ if __name__ == '__main__':
 
     Params.do_param_dist = True     # Do param-dist version if True, param-point if False
     Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
-    Params.run_estimation = False   # Set to False to use previously computed estimates from ParamsEstimates
+    Params.run_estimation = True   # Set to False to use previously computed estimates from ParamsEstimates
     Params.solve_model = True      # Set to False to use previously computed LorenzCurves for particular growthFactors
     
     # Create spec_name from Params
@@ -579,13 +579,14 @@ if __name__ == '__main__':
         EstimationEconomy.update()
         EstimationEconomy.makeAggShkHist()
         
+    pdb.set_trace()
     if Params.run_estimation: # Estimate the model
         # Choose the bounding region for the parameter search
         if Params.param_name == 'CRRA':
             param_range = [0.2,70.0]
             spread_range = [0.00001,1.0]
         elif Params.param_name == 'DiscFac':
-            param_range = [0.95,0.995]
+            param_range = [0.95,0.999]
             spread_range = [0.006,0.008]
         else:
             print('Parameter range for ' + Params.param_name + ' has not been defined!')

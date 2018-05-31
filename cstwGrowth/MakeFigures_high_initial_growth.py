@@ -1,6 +1,6 @@
 '''
-Creates figures for baseline calibration and saves them in ./Figures/Baseline/
-Assumes the model has been run and results are stored in ./Results/Baseline/
+Creates figures for baseline calibration and saves them in ./Figures/High_initial_growth/
+Assumes the model has been run and results are stored in ./Results/High_initial_growth/
 '''
 import pdb
 import numpy as np
@@ -14,7 +14,7 @@ from cstwGrowth import getLorenzShares, getGini
 #pdb.set_trace()
 
 
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 
@@ -29,11 +29,11 @@ Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 lorenz_long_data = np.hstack((np.array(0.0),getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=np.arange(0.01,1.0,0.01).tolist()),np.array(1.0)))
 
 # Load growth factor used when finding the estimates
-with open('./ParamsEstimates/Baseline/' + Params.spec_name + '.pkl') as f:
+with open('./ParamsEstimates/High_initial_growth/' + Params.spec_name + '.pkl') as f:
     center_estimate, spread_estimate, baseline_growth = pickle.load(f)
 
 # Load inequality stats
-with open('./Results/Baseline/' + Params.spec_name + '.pkl') as f:
+with open('./Results/High_initial_growth/' + Params.spec_name + '.pkl') as f:
     annual_growthFactors,\
     growthFactors,\
     LorenzLongLvlSim,\
@@ -100,7 +100,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'Gini_Lvl_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'Gini_Lvl_' + Params.spec_name + '.pdf')
 
 
 # Plot Gini for wealth-to-income ratios
@@ -114,7 +114,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='upper right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'Gini_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'Gini_Nrm_' + Params.spec_name + '.pdf')
 
 
 # Plot mean-to-median ratio for wealth levels
@@ -126,7 +126,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'MeanToMedian_Lvl_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'MeanToMedian_Lvl_' + Params.spec_name + '.pdf')
 
 
 # Plot mean-to-median ratio for wealth-to-income ratios
@@ -138,7 +138,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'MeanToMedian_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'MeanToMedian_Nrm_' + Params.spec_name + '.pdf')
 
 
 # Plot wealth shares of different percentiles of the wealth level distribution
@@ -152,7 +152,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Wealth share',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'Top_Lvl_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'Top_Lvl_' + Params.spec_name + '.pdf')
 
 
 # Plot wealth shares of different percentiles of the wealth-to-income ratio distribution
@@ -166,7 +166,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Wealth share',fontsize=12)
 plt.legend(loc='upper right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'Top_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'Top_Nrm_' + Params.spec_name + '.pdf')
 
 
 # Plot percentile ratios for wealth levels
@@ -182,7 +182,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Ratio',fontsize=12)
 plt.legend(loc='upper left')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'PrcRatios_Lvl_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'PrcRatios_Lvl_' + Params.spec_name + '.pdf')
 
 
 # Plot percentile ratios for wealth-to-income ratios
@@ -198,7 +198,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Ratio',fontsize=12)
 plt.legend(loc='upper right')
 plt.show()
-fig.savefig('./Figures/Baseline/' + 'PrcRatios_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('./Figures/High_initial_growth/' + 'PrcRatios_Nrm_' + Params.spec_name + '.pdf')
 
 
 
