@@ -317,11 +317,11 @@ class cstwMPCmarket(EstimationMarketClass):
         self.aNrmMeanToMedianSim = np.mean(self.aNrmMeanToMedian_hist[self.ignore_periods:])
         self.aLvlPercentilesSim = np.hstack(np.mean(np.array(self.aLvlPercentiles_hist)[self.ignore_periods:,:],axis=0))
         self.aNrmPercentilesSim = np.hstack(np.mean(np.array(self.aNrmPercentiles_hist)[self.ignore_periods:,:],axis=0))
-
                      
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
-#        results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
+        if hasattr(self, 'LorenzDistance'): # This attribute only exists if we run the estimation
+            results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
         results_string += 'Gini coefficient for wealth levels is ' + str(self.aLvlGiniSim) + '\n'
         results_string += 'Gini coefficient for wealth-to-income ratios is ' + str(self.aNrmGiniSim) + '\n'
         results_string += 'Mean to median ratio for wealth levels is ' + str(self.aLvlMeanToMedianSim) + '\n'
