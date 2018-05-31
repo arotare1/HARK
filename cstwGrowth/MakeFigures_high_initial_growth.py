@@ -30,7 +30,7 @@ lorenz_long_data = np.hstack((np.array(0.0),getLorenzShares(Params.SCF_wealth,we
 
 # Load growth factor used when finding the estimates
 with open('./ParamsEstimates/High_initial_growth/' + Params.spec_name + '.pkl') as f:
-    center_estimate, spread_estimate, baseline_growth = pickle.load(f)
+    center_estimate, spread_estimate, estimation_growth = pickle.load(f)
 
 # Load inequality stats
 with open('./Results/High_initial_growth/' + Params.spec_name + '.pkl') as f:
@@ -75,7 +75,7 @@ aNrm_90to10 = [item[89]/item[9] for item in aNrmPercentilesSim]
 
     
 # Plot average Lorenz curve for wealth levels
-which_growth = np.where(growthFactors==baseline_growth)[0][0] # index of growth for which estimates were computed
+which_growth = np.where(growthFactors==estimation_growth)[0][0] # index of growth for which estimates were computed
 LorenzAxis = np.arange(101,dtype=float)
 fig = plt.figure()
 plt.plot(LorenzAxis, lorenz_long_data, '-k', linewidth=1.5, label='data')
@@ -94,7 +94,7 @@ aLvlGini = [getGini(item) for item in LorenzLongLvlSim]   # Gini coefficient of 
 fig = plt.figure()
 plt.plot(annual_growthFactors, aLvlGiniSim, '-bo', label='avg(gini)')
 plt.plot(annual_growthFactors, aLvlGini, '-ro', label='gini(avg)')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Gini coefficient for wealth levels')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
@@ -108,7 +108,7 @@ aNrmGini = [getGini(item) for item in LorenzLongNrmSim]   # Gini coefficient of 
 fig = plt.figure()
 plt.plot(annual_growthFactors, aNrmGiniSim, '-bo', label='avg(gini)')
 plt.plot(annual_growthFactors, aNrmGini, '-ro', label='gini(avg)')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Gini coefficient for wealth-to-income ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
@@ -120,7 +120,7 @@ fig.savefig('./Figures/High_initial_growth/' + 'Gini_Nrm_' + Params.spec_name + 
 # Plot mean-to-median ratio for wealth levels
 fig = plt.figure()
 plt.plot(annual_growthFactors, aLvlMeanToMedianSim, '-bo')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Mean-to-median ratio for wealth levels')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
@@ -132,7 +132,7 @@ fig.savefig('./Figures/High_initial_growth/' + 'MeanToMedian_Lvl_' + Params.spec
 # Plot mean-to-median ratio for wealth-to-income ratios
 fig = plt.figure()
 plt.plot(annual_growthFactors, aNrmMeanToMedianSim, '-bo')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Mean-to-median ratio for wealth-to-income ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Mean-to-median ratio',fontsize=12)
@@ -146,7 +146,7 @@ fig = plt.figure()
 plt.plot(annual_growthFactors, aLvlTop1share, '-bo', label='top 1%')
 plt.plot(annual_growthFactors, aLvlTop5share, '-ro', label='top 5%')
 plt.plot(annual_growthFactors, aLvlTop10share, '-go', label='top 10%')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Wealth level shares')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Wealth share',fontsize=12)
@@ -160,7 +160,7 @@ fig = plt.figure()
 plt.plot(annual_growthFactors, aNrmTop1share, '-bo', label='top 1%')
 plt.plot(annual_growthFactors, aNrmTop5share, '-ro', label='top 5%')
 plt.plot(annual_growthFactors, aNrmTop10share, '-go', label='top 10%')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Wealth-to-income ratio shares')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Wealth share',fontsize=12)
@@ -176,7 +176,7 @@ plt.plot(annual_growthFactors, aLvl_95to50, '-ro', label='95/50')
 plt.plot(annual_growthFactors, aLvl_90to50, '-go', label='90/50')
 plt.plot(annual_growthFactors, aLvl_95to5, '-yo', label='95/5')
 plt.plot(annual_growthFactors, aLvl_90to10, '-ko', label='90/10')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Wealth levels percentile ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Ratio',fontsize=12)
@@ -192,7 +192,7 @@ plt.plot(annual_growthFactors, aNrm_95to50, '-ro', label='95/50')
 plt.plot(annual_growthFactors, aNrm_90to50, '-go', label='90/50')
 plt.plot(annual_growthFactors, aNrm_95to5, '-yo', label='95/5')
 plt.plot(annual_growthFactors, aNrm_90to10, '-ko', label='90/10')
-plt.axvline(x=baseline_growth**4)
+plt.axvline(x=estimation_growth**4)
 plt.title('Wealth-to-income percentile ratios')
 plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Ratio',fontsize=12)

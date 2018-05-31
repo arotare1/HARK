@@ -321,7 +321,7 @@ class cstwMPCmarket(EstimationMarketClass):
                      
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
-        results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
+#        results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
         results_string += 'Gini coefficient for wealth levels is ' + str(self.aLvlGiniSim) + '\n'
         results_string += 'Gini coefficient for wealth-to-income ratios is ' + str(self.aNrmGiniSim) + '\n'
         results_string += 'Mean to median ratio for wealth levels is ' + str(self.aLvlMeanToMedianSim) + '\n'
@@ -487,7 +487,7 @@ if __name__ == '__main__':
 
     Params.do_param_dist = True     # Do param-dist version if True, param-point if False
     Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
-    Params.run_estimation = True   # Set to False to use previously computed estimates from ParamsEstimates
+    Params.run_estimation = False   # Set to False to use previously computed estimates from ParamsEstimates
     Params.solve_model = True      # Set to False to use previously computed LorenzCurves for particular growthFactors
     
     # Create spec_name from Params
@@ -579,7 +579,6 @@ if __name__ == '__main__':
         EstimationEconomy.update()
         EstimationEconomy.makeAggShkHist()
         
-    pdb.set_trace()
     if Params.run_estimation: # Estimate the model
         # Choose the bounding region for the parameter search
         if Params.param_name == 'CRRA':
@@ -631,12 +630,11 @@ if __name__ == '__main__':
     else: 
         # Load previously computed estimates
         with open('./ParamsEstimates/Baseline/' + Params.spec_name + '.pkl') as f:
-            center_estimate, spread_estimate, baseline_growth = pickle.load(f)
+            center_estimate, spread_estimate, estimation_growth = pickle.load(f)
         EstimationEconomy.center_estimate = center_estimate
         EstimationEconomy.spread_estimate = spread_estimate 
     
     if Params.solve_model:  # Solve the model
-        #pdb.set_trace()
         EstimationEconomy.LorenzBool = True
         EstimationEconomy.ManyStatsBool = True
         EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
@@ -662,7 +660,8 @@ if __name__ == '__main__':
                     NewEstimationEconomy.agents[j].PermGroFac = [i*g for i in EstimationEconomy.agents[j].PermGroFac]
                 else:
                     NewEstimationEconomy.agents[j].PermGroFac = [g]
-        
+            
+            pdb.set_trace()
             t_start = clock()
             NewEstimationEconomy.solve()
             t_end = clock()
