@@ -12,8 +12,6 @@ param_name = 'DiscFac'        # Which parameter to introduce heterogeneity in
 dist_type = 'uniform'         # Which type of distribution to use
 do_lifecycle = False          # Use lifecycle model if True, perpetual youth if False
 do_param_dist = False         # Do param-dist version if True, param-point if False
-run_estimation = True         # Runs the estimation if True
-solve_model = True            # Solves the model if True
 do_simulation = False         # Runs simulation if True
 find_beta_vs_KY = False       # Computes K/Y ratio for a wide range of beta; should have do_beta_dist = False
 do_sensitivity = [False, False, False, False, False, False, False, False] # Choose which sensitivity analyses to run: rho, xi_sigma, psi_sigma, mu, urate, mortality, g, R

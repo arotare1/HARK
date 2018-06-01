@@ -1,11 +1,19 @@
 '''
-Decomposes the change in wealth inequality using the following experiment:
+Decomposes the change in wealth inequality and makes figures for the following experiment:
 Step 1. Compute inequality measures for when people update their consumption rule when growth changes
 Step 2. Compute inequality measures for when people DO NOT update their consumption rule
 
 The difference between these two cases comes from the erosion of the wealth-to-income ratio due to
 the change in income growth.
 
+Figures are saved in ./Figures/Baseline/Decompose_inequality/ and 
+./Figures/HighEstimationGrowth/Decompose_inequality/
+
+Assumes that estimates of center and spread have already been computed and stored in ./ParamsEstimates/
+This is done by FindEstimates.py
+
+Assumes the model has been solved for Step 1. and results stored in ./Results/
+This is done by VaryGrowth.py
 '''
 
 import pdb
@@ -19,15 +27,16 @@ import pandas as pd
 import SetupParams as Params
 from cstwGrowth import cstwMPCagent, calcStationaryAgeDstn, cstwMPCmarket, getGini
 
-Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+Params.do_param_dist = False    # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
-Params.do_simulation = True     # Runs simulation if True
-initial_growth = 1.0       # 1.0 for baseline, 1.03**0.25 for high initial growth
+Params.do_simulation = True     # Run simulation if True, load existing simulation results if False
+which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
+                                # 1.0 for Baseline, >1 for HighEstimationGrowth
+path_estimation_growth = 'Baseline/' if which_estimation_growth == 1 else 'HighEstimationGrowth/'
 
+# Update spec_name
 Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
-
-path_initial_growth = 'Baseline/' if initial_growth == 1 else 'High_initial_growth/'
 
 #------------------------------------------------------------------------------------------
 # Step 1. Load inequality data for the case when agents update their consumption rule
@@ -54,29 +63,17 @@ with open('./Results/' + path_initial_growth + Params.spec_name + '.pkl') as f:
 # Step 2. Simulate economy for different growth factors WITHOUT updating consumption rule
 #------------------------------------------------------------------------------------------
 
-if Params.do_simulation: # Run simulation if True, o.w. load previously computed simmulation results
+if Params.do_simulation: # Run simulation
     # Set number of beta types
     if Params.do_param_dist:
         Params.pref_type_count = 7       # Number of discrete beta types in beta-dist
     else:
         Params.pref_type_count = 1       # Just one beta type in beta-point
         
-    # Set simulation parameters
-    if Params.do_param_dist:
-        if Params.do_agg_shocks:
-            Params.Population = 16800
-        else:
-            Params.Population = 14000
-    else:
-        if Params.do_agg_shocks:
-            Params.Population = 9600
-        else:
-            Params.Population = 10000    # Total number of simulated agents in the population
-    
     # Make AgentTypes
     if Params.do_lifecycle:
         DropoutType = cstwMPCagent(**Params.init_dropout)
-        DropoutType.PermGroFac = [initial_growth]
+        DropoutType.PermGroFac = [estimation_growth]    # Update growth factor
         DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
         HighschoolType = deepcopy(DropoutType)
         HighschoolType(**Params.adj_highschool)
@@ -95,10 +92,10 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
     else:
         if Params.do_agg_shocks:
             PerpetualYouthType = cstwMPCagent(**Params.init_agg_shocks)
-            PerpetualYouthType.PermGroFac = [initial_growth]
+            PerpetualYouthType.PermGroFac = [estimation_growth]    # Update growth factor
         else:
             PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
-            PerpetualYouthType.PermGroFac = [initial_growth]
+            PerpetualYouthType.PermGroFac = [estimation_growth]    # Update growth factor
         PerpetualYouthType.AgeDstn = np.array(1.0)
         EstimationAgentList = []
         for n in range(Params.pref_type_count):
@@ -109,34 +106,43 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
         EstimationAgentList[j].seed = j
     
     # Make an economy for the consumers to live in
-    EstimationEconomy = cstwMPCmarket(**Params.init_market)
-    EstimationEconomy.agents = EstimationAgentList
-    EstimationEconomy.center_estimate = center_estimate # Use previously computed estimates for center
-    EstimationEconomy.spread_estimate = spread_estimate # Use previously computed estimates for spread
+    Economy = cstwMPCmarket(**Params.init_market)
+    if Params.do_param_dist:    # Update simulation parameters
+        if Params.do_agg_shocks:
+            Economy.Population = 16800
+        else:
+            Economy.Population = 14000
+    else:
+        if Params.do_agg_shocks:
+            Economy.Population = 9600
+        else:
+            Economy.Population = 10000    # Total number of simulated agents in the population
+    Economy.agents = EstimationAgentList
+    Economy.center_estimate = center_estimate # Use previously computed estimates for center
+    Economy.spread_estimate = spread_estimate # Use previously computed estimates for spread
 
     if Params.do_lifecycle:
-        EstimationEconomy.PopGroFac = Params.PopGroFac
-        EstimationEconomy.TypeWeight = Params.TypeWeight_lifecycle
-        EstimationEconomy.T_retire = Params.working_T-1
-        EstimationEconomy.act_T = Params.T_sim_LC
-        EstimationEconomy.ignore_periods = Params.ignore_periods_LC
+        Economy.PopGroFac = Params.PopGroFac
+        Economy.TypeWeight = Params.TypeWeight_lifecycle
+        Economy.T_retire = Params.working_T-1
+        Economy.act_T = Params.T_sim_LC
+        Economy.ignore_periods = Params.ignore_periods_LC
     else:
-        EstimationEconomy.PopGroFac = 1.0
-        EstimationEconomy.TypeWeight = [1.0]
-        EstimationEconomy.act_T = Params.T_sim_PY
-        EstimationEconomy.ignore_periods = Params.ignore_periods_PY
+        Economy.PopGroFac = 1.0
+        Economy.TypeWeight = [1.0]
+        Economy.act_T = Params.T_sim_PY
+        Economy.ignore_periods = Params.ignore_periods_PY
     if Params.do_agg_shocks:
-        EstimationEconomy(**Params.aggregate_params)
-        EstimationEconomy.update()
-        EstimationEconomy.makeAggShkHist()
+        Economy(**Params.aggregate_params)
+        Economy.update()
+        Economy.makeAggShkHist()
             
     # Solve economy for initial growth rate. This consumption rule will be used throughout the simulation
-    EstimationEconomy.LorenzBool = True
-    EstimationEconomy.ManyStatsBool = True
-    EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,
-                                       center_estimate,spread_estimate,Params.dist_type)
-    
-    EstimationEconomy.solveAgents()
+    Economy.LorenzBool = True
+    Economy.ManyStatsBool = True
+    Economy.distributeParams(Params.param_name,Params.pref_type_count,
+                             center_estimate,spread_estimate,Params.dist_type)
+    Economy.solveAgents()
     
     # Initialize inequality data to be filled during simulation
     LorenzLongLvlSim_no_update = []
@@ -154,26 +160,28 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
         g = growthFactors[i]
         
         print('Now simulating model for annual growth = ' + str(annual_g))
-        for j in range(len(EstimationEconomy.agents)):
+        for j in range(len(Economy.agents)):
             if Params.do_lifecycle:
-                EstimationEconomy.agents[j].PermGroFac = [i*g for i in EstimationEconomy.agents[j].PermGroFac]
+                Economy.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
+                Economy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
             else:
-                EstimationEconomy.agents[j].PermGroFac = [g]
+                Economy.agents[j].PermGroFac = [g]
+                Economy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
         
-        EstimationEconomy.makeHistory()
-        EstimationEconomy.showManyStats(Params.spec_name)
+        Economy.makeHistory()
+        Economy.showManyStats(Params.spec_name)
         
-        LorenzLongLvlSim_no_update.append(EstimationEconomy.LorenzLongLvlSim)
-        LorenzLongNrmSim_no_update.append(EstimationEconomy.LorenzLongNrmSim)
-        aLvlGiniSim_no_update.append(EstimationEconomy.aLvlGiniSim)
-        aNrmGiniSim_no_update.append(EstimationEconomy.aNrmGiniSim)
-        aLvlMeanToMedianSim_no_update.append(EstimationEconomy.aLvlMeanToMedianSim)
-        aNrmMeanToMedianSim_no_update.append(EstimationEconomy.aNrmMeanToMedianSim)
-        aLvlPercentilesSim_no_update.append(EstimationEconomy.aLvlPercentilesSim)
-        aNrmPercentilesSim_no_update.append(EstimationEconomy.aNrmPercentilesSim)
+        LorenzLongLvlSim_no_update.append(Economy.LorenzLongLvlSim)
+        LorenzLongNrmSim_no_update.append(Economy.LorenzLongNrmSim)
+        aLvlGiniSim_no_update.append(Economy.aLvlGiniSim)
+        aNrmGiniSim_no_update.append(Economy.aNrmGiniSim)
+        aLvlMeanToMedianSim_no_update.append(Economy.aLvlMeanToMedianSim)
+        aNrmMeanToMedianSim_no_update.append(Economy.aNrmMeanToMedianSim)
+        aLvlPercentilesSim_no_update.append(Economy.aLvlPercentilesSim)
+        aNrmPercentilesSim_no_update.append(Economy.aNrmPercentilesSim)
         
     # Save growth factors and corresponding results as .pkl and .csv
-    with open('./Results/' + path_initial_growth + 'Decompose_inequality/' 
+    with open('./Results/' + path_estimation_growth + 'Decompose_inequality/' 
               + Params.spec_name + '.pkl', 'w') as f:
         pickle.dump([annual_growthFactors,
                      growthFactors,
@@ -194,11 +202,11 @@ if Params.do_simulation: # Run simulation if True, o.w. load previously computed
                'aNrmMeanToMedianSim' : aNrmMeanToMedianSim_no_update}
     
     df = pd.DataFrame.from_dict(csvdict)
-    df.to_csv('./Results/' + path_initial_growth + 'Decompose_inequality/' 
+    df.to_csv('./Results/' + path_estimation_growth + 'Decompose_inequality/' 
               + Params.spec_name + '.csv')
     
 else: # Load previously computed simulation results
-    with open('./Results/' + path_initial_growth + 'Decompose_inequality/' 
+    with open('./Results/' + path_estimation_growth + 'Decompose_inequality/' 
               + Params.spec_name + '.pkl') as f:
         annual_growthFactors,\
         growthFactors,\
@@ -229,7 +237,7 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
-fig.savefig('./Figures/' + path_initial_growth + 'Decompose_inequality/Gini_Lvl_'
+fig.savefig('./Figures/' + path_estimation_growth + 'Decompose_inequality/Gini_Lvl_'
             + Params.spec_name + '.pdf')
 
 fig = plt.figure()
@@ -246,32 +254,6 @@ plt.xlabel('Growth factor',fontsize=12)
 plt.ylabel('Gini coefficient',fontsize=12)
 plt.legend(loc='lower right')
 plt.show()
-fig.savefig('./Figures/' + path_initial_growth + 'Decompose_inequality/Gini_Nrm_'
+fig.savefig('./Figures/' + path_estimation_growth + 'Decompose_inequality/Gini_Nrm_'
             + Params.spec_name + '.pdf')
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
