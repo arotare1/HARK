@@ -1,6 +1,9 @@
 '''
 Plots inequality measures for different growth factors and saves them in ./Figures/
 
+Assumes that estimates of center and spread have already been computed and stored in ./ParamsEstimates/
+This is done by FindEstimates.py
+
 Assumes the model has been solved and results stored in ./Results/
 This is done by VaryGrowth.py
 '''
@@ -12,7 +15,7 @@ import pandas as pd
 import SetupParams as Params
 from cstwGrowth import getLorenzShares, getGini
 
-Params.do_param_dist = False    # Do param-dist version if True, param-point if False
+Params.do_param_dist = True    # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
                                 # 1.0 for Baseline, >1 for HighEstimationGrowth

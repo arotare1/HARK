@@ -27,7 +27,7 @@ import pandas as pd
 import SetupParams as Params
 from cstwGrowth import cstwMPCagent, calcStationaryAgeDstn, cstwMPCmarket, getGini
 
-Params.do_param_dist = False    # Do param-dist version if True, param-point if False
+Params.do_param_dist = True    # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 Params.do_simulation = True     # Run simulation if True, load existing simulation results if False
 which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
@@ -38,16 +38,16 @@ path_estimation_growth = 'Baseline/' if which_estimation_growth == 1 else 'HighE
 Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 
+# Load previously computed estimates for spread and center
+with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.pkl') as f:
+    center_estimate, spread_estimate, estimation_growth = pickle.load(f)
+
 #------------------------------------------------------------------------------------------
 # Step 1. Load inequality data for the case when agents update their consumption rule
 #------------------------------------------------------------------------------------------
 
-# Load previously computed estimates for spread and center
-with open('./ParamsEstimates/' + path_initial_growth + Params.spec_name + '.pkl') as f:
-    center_estimate, spread_estimate, estimation_growth = pickle.load(f)
-
 # Load previously computed inequality data
-with open('./Results/' + path_initial_growth + Params.spec_name + '.pkl') as f:
+with open('./Results/' + path_estimation_growth + Params.spec_name + '.pkl') as f:
     annual_growthFactors,\
     growthFactors,\
     LorenzLongLvlSim,\

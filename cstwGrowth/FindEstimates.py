@@ -19,7 +19,7 @@ from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
 
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
-estimation_growth = 1.04**0.25         # Set growth rate to be used when estimating parameters 
+estimation_growth = 1.0         # Set growth rate to be used when estimating parameters 
                                 # 1.0 for Baseline, >1 for HighEstimationGrowth
 path_estimation_growth = 'Baseline/' if estimation_growth == 1 else 'HighEstimationGrowth/'
 
