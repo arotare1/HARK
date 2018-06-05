@@ -4,7 +4,7 @@ Plots inequality measures for different growth factors and saves them in ./Figur
 Assumes that estimates of center and spread have already been computed and stored in ./ParamsEstimates/
 This is done by FindEstimates.py
 
-Assumes the model has been solved and results stored in ./Results/
+Assumes that the model has been solved and results stored in ./Results/
 This is done by VaryGrowth.py
 '''
 import pdb

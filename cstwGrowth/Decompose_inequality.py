@@ -12,7 +12,7 @@ Figures are saved in ./Figures/Baseline/Decompose_inequality/ and
 Assumes that estimates of center and spread have already been computed and stored in ./ParamsEstimates/
 This is done by FindEstimates.py
 
-Assumes the model has been solved for Step 1. and results stored in ./Results/
+Assumes that the model has been solved for Step 1. and results stored in ./Results/
 This is done by VaryGrowth.py
 '''
 
@@ -226,7 +226,6 @@ else: # Load previously computed simulation results
 fig = plt.figure()
 aLvlGini = [getGini(item) for item in LorenzLongLvlSim]   # Gini coefficient of average Lorenz curve
 aLvlGini_no_update = [getGini(item) for item in LorenzLongLvlSim_no_update]
-fig = plt.figure()
 plt.plot(annual_growthFactors, aLvlGiniSim, '-bo', label='update avg(gini)')
 plt.plot(annual_growthFactors, aLvlGiniSim_no_update, '-ro', label='no update avg(gini)')
 plt.plot(annual_growthFactors, aLvlGini, '-go', label='update gini(avg)')
@@ -243,7 +242,6 @@ fig.savefig('./Figures/' + path_estimation_growth + 'Decompose_inequality/Gini_L
 fig = plt.figure()
 aNrmGini = [getGini(item) for item in LorenzLongNrmSim]   # Gini coefficient of average Lorenz curve
 aNrmGini_no_update = [getGini(item) for item in LorenzLongNrmSim_no_update]
-fig = plt.figure()
 plt.plot(annual_growthFactors, aNrmGiniSim, '-bo', label='update avg(gini)')
 plt.plot(annual_growthFactors, aNrmGiniSim_no_update, '-ro', label='no update avg(gini)')
 plt.plot(annual_growthFactors, aNrmGini, '-go', label='update gini(avg)')

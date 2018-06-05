@@ -6,11 +6,11 @@ The exercise is done for two cases:
 Case 1. Agents update their consumption rule when growth changes
     Case 1a. T_age == 400 (this is the default value and corresponds to a maximum age of 24+400/4=124 yrs)
     Case 1b. T_age == 200 (this corresponds to a maximum age of 24+200/4=74 yrs)
-    Case 1c. T_age == 120 (this corresponds to a maximum age of 24+120/4=54 yrs)
+    Case 1c. T_age == 100 (this corresponds to a maximum age of 24+100/4=49 yrs)
 Case 2. Agents DO NOT update their consumption rule when growth changes
     Case 2a. T_age == 400 (this is the default value and corresponds to a maximum age of 24+400/4=124 yrs)
     Case 2b. T_age == 200 (this corresponds to a maximum age of 24+200/4=74 yrs)
-    Case 2c. T_age == 120 (this corresponds to a maximum age of 24+120/4=54 yrs)
+    Case 2c. T_age == 100 (this corresponds to a maximum age of 24+100/4=49 yrs)
 
 This experiment should shed light on why inequality in wealth levels is not monotonic in the PY model.
 It is possible that inequality goes back up after a certain growth level because of the agents that
@@ -21,10 +21,10 @@ Figures are saved in ./Figures/Baseline/PseudoLC/ and ./Figures/HighEstimationGr
 Assumes that estimates of center and spread have already been computed and stored in ./ParamsEstimates/
 This is done by FindEstimates.py
 
-Assumes the model has been solved for Case 1a. and results stored in ./Results/
+Assumes that the model has been solved for Case 1a. and results stored in ./Results/
 This is done by VaryGrowth.py 
 
-Assumes the model has been simulated for Case 2a. and simulation results stored in 
+Assumes that the model has been simulated for Case 2a. and simulation results stored in 
 ./Results/Baseline/Decompose_inequality/ and ./Results/HighEstimationGrowth/Decompose_inequality/
 This is done by Decompose_inequality.py
 '''
@@ -40,9 +40,8 @@ import pandas as pd
 import SetupParams as Params
 from cstwGrowth import cstwMPCagent, calcStationaryAgeDstn, cstwMPCmarket, getGini
 
-Params.do_param_dist = False    # Do param-dist version if True, param-point if False
+Params.do_param_dist = True    # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
-Params.do_simulation = True     # Run simulation if True, load existing simulation results if False
 which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
                                 # 1.0 for Baseline, >1 for HighEstimationGrowth
 path_estimation_growth = 'Baseline/' if which_estimation_growth == 1 else 'HighEstimationGrowth/'
@@ -72,8 +71,8 @@ with open('./Results/' + path_estimation_growth + Params.spec_name + '.pkl') as 
     aLvlPercentilesSim,\
     aNrmPercentilesSim = pickle.load(f)
     
-#---------------------------------------------------------------------------------------
-# Case 2a. Agents DO NOT update their consumption rule when growth changes. T_age==400
+#--------------------------------------------------------------------------------------
+# Case 2a. Agents DO NOT update their consumption rule when growth changes. T_age=400
 #--------------------------------------------------------------------------------------
     
 # Load previously computed inequality data
@@ -90,7 +89,7 @@ with open('./Results/' + path_estimation_growth + 'Decompose_inequality/' + Para
     aNrmPercentilesSim_no_update = pickle.load(f)
     
 #-------------------------------------------------------------------------------------
-# Case 1b,c. Agents update their consumption rule when growth changes. T_age==200,120
+# Cases 1b,c and 2b,c. T_age=200,120
 #-------------------------------------------------------------------------------------
 
 # Set number of beta types
@@ -147,6 +146,8 @@ else:
     else:
         Economy.Population = 10000    # Total number of simulated agents in the population
 Economy.agents = AgentList
+Economy.center_estimate = center_estimate # Use previously computed estimates for center
+Economy.spread_estimate = spread_estimate # Use previously computed estimates for spread
 if Params.do_lifecycle:
     Economy.PopGroFac = Params.PopGroFac
     Economy.TypeWeight = Params.TypeWeight_lifecycle
@@ -162,67 +163,164 @@ if Params.do_agg_shocks:
     Economy(**Params.aggregate_params)
     Economy.update()
     Economy.makeAggShkHist()
+    
+# Distribute preference parameters
+Economy.distributeParams(Params.param_name,Params.pref_type_count,
+                         center_estimate,spread_estimate,Params.dist_type)
         
-# Solve the model for different growth factors and different T_age
-Economy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,
-                         spread_estimate,Params.dist_type)
+# Create list of growth factors and terminal ages to loop over
 annual_growthFactors = np.arange(1.0, 1.07, 0.01)
 growthFactors = np.power(annual_growthFactors, 0.25)
-T_age_list = [200, 120]
+T_age_list = [200, 100]
 
-NewEconomies = []   # Make list of economies for different combinations of growth and T_age
+aLvlGinis = []  # Make list of wealth level Ginis where agents update the consumption rule
+                # Each element corresponds to a combination of growth factor and terminal age
+aLvlGinis_no_update = []  # Make list of wealth ratio Ginis where agents DON'T update the consumption rule
+aNrmGinis = []  # Make list of wealth level Ginis where agents update the consumption rule
+aNrmGinis_no_update = []  # Make list of wealth ratio Ginis where agents DON'T update the consumption rule
 
-for k in range(len(T_age_list)):
-    for i in range(len(growthFactors)):
-        annual_g = annual_growthFactors[i]
-        g = growthFactors[i]
-        T_age = T_age_list[k]
-        NewEconomy = deepcopy(Economy)
-        for j in range(len(NewEconomy.agents)):
+for i in range(len(T_age_list)):
+    T_age = T_age_list[i]
+    
+    # Create a new "update" economy
+    NewEconomy = deepcopy(Economy)
+    NewEconomy.LorenzBool = True
+    NewEconomy.ManyStatsBool = True
+    
+    # Create a new "no update" economy
+    NewEconomy_no_update = deepcopy(Economy)
+    NewEconomy_no_update.LorenzBool = True
+    NewEconomy_no_update.ManyStatsBool = True
+
+    for j in range(len(Economy.agents)):
+        # Give agents the current T_age
+        NewEconomy.agents[j].T_age = T_age
+        NewEconomy_no_update.agents[j].T_age = T_age
+        
+    # Solve the "no update" economy for this T_age. This consumption rule will be used when we loop
+    # over growth factors
+    NewEconomy_no_update.solveAgents()
+    
+    for k in range(len(growthFactors)):
+        annual_g = annual_growthFactors[k]
+        g = growthFactors[k]
+        
+        # Give agents the current growthFactor
+        for j in range(len(Economy.agents)):
             if Params.do_lifecycle:
                 NewEconomy.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
                 NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
+                NewEconomy_no_update.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
+                NewEconomy_no_update.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
             else:
                 NewEconomy.agents[j].PermGroFac = [g]
                 NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
-                NewEconomy.agents[j].T_age = T_age
+                NewEconomy_no_update.agents[j].PermGroFac = [g]
+                NewEconomy_no_update.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
         
-        print('Now solving model for T_age = ' + str(T_age) + ', annual growth = '+ str(annual_g))    
-        t_start = clock()
+        # Solve and simulate the "update" economy
+        print('Now solving the "update" economy for T_age = ' + str(T_age) + 
+              ' and annual growth = ' + (str(annual_g)))
         NewEconomy.solve()
-        t_end = clock()
-        
         NewEconomy.showManyStats(Params.spec_name)
-        NewEconomies.append(NewEconomy)     # Add the new economy to the list
+
+        # Just simulate the "no update" economy using previously computed consumption rule
+        print('Now simulating the "no update" economy for T_age = ' + str(T_age) + 
+              ' and annual growth = ' + (str(annual_g)))
+        NewEconomy_no_update.makeHistory()
+        NewEconomy_no_update.showManyStats(Params.spec_name)
         
-        print('Solving model took ' + str(t_end-t_start) + ' seconds.')
+        # Add Ginis to list
+        aLvlGinis.append(getGini(NewEconomy.LorenzLongLvlSim))
+        aLvlGinis_no_update.append(getGini(NewEconomy_no_update.LorenzLongLvlSim))
+        aNrmGinis.append(getGini(NewEconomy.LorenzLongNrmSim))
+        aNrmGinis_no_update.append(getGini(NewEconomy_no_update.LorenzLongNrmSim))
 
+#------------------------------------------------------------------------------------------
+# Make figures
+#------------------------------------------------------------------------------------------
 
+# Get Ginis of baseline economy
+aLvlGini = [getGini(item) for item in LorenzLongLvlSim]   # Gini coefficient of average Lorenz curve
+aLvlGini_no_update = [getGini(item) for item in LorenzLongLvlSim_no_update]
 
+aNrmGini = [getGini(item) for item in LorenzLongNrmSim]   # Gini coefficient of average Lorenz curve
+aNrmGini_no_update = [getGini(item) for item in LorenzLongNrmSim_no_update]
 
+# For the economies with different T_age, split Gini list into chunks by T_age
+aLvlGinis = np.array(aLvlGinis)
+aLvlGinis = np.array_split(aLvlGinis, len(T_age_list))
+aLvlGinis_no_update = np.array(aLvlGinis_no_update)
+aLvlGinis_no_update = np.array_split(aLvlGinis_no_update, len(T_age_list))
 
+aNrmGinis = np.array(aNrmGinis)
+aNrmGinis = np.array_split(aNrmGinis, len(T_age_list))
+aNrmGinis_no_update = np.array(aNrmGinis_no_update)
+aNrmGinis_no_update = np.array_split(aNrmGinis_no_update, len(T_age_list))
 
+# Plot wealth level Ginis for "update" economies
+fig = plt.figure()
+plt.plot(annual_growthFactors, aLvlGini, '-ko', label='T_age=400 (124yrs)')
+colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
+for j in range(len(T_age_list)):
+    plt.plot(annual_growthFactors, aLvlGinis[j], '-o', color=next(colors),
+             label='T_age=' + str(T_age_list[j]))
+plt.axvline(x=estimation_growth**4)
+plt.title('Gini coefficient for wealth levels')
+plt.xlabel('Growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='upper left')
+plt.show()
+fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Lvl_'
+            + Params.spec_name + '.pdf')
 
+# Plot wealth level Ginis for "no update" economies
+fig = plt.figure()
+plt.plot(annual_growthFactors, aLvlGini_no_update, '-ko', label='T_age=400 (124yrs)')
+colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
+for j in range(len(T_age_list)):
+    plt.plot(annual_growthFactors, aLvlGinis_no_update[j], '-o', color=next(colors),
+             label='T_age=' + str(T_age_list[j]))
+plt.axvline(x=estimation_growth**4)
+plt.title('Gini coefficient for wealth levels (no update)')
+plt.xlabel('Growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='upper left')
+plt.show()
+fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Lvl_no_update'
+            + Params.spec_name + '.pdf')
 
+# Plot wealth ratio Ginis for "update" economies
+fig = plt.figure()
+plt.plot(annual_growthFactors, aNrmGini, '-ko', label='T_age=400 (124yrs)')
+colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
+for j in range(len(T_age_list)):
+    plt.plot(annual_growthFactors, aNrmGinis[j], '-o', color=next(colors),
+             label='T_age=' + str(T_age_list[j]))
+plt.axvline(x=estimation_growth**4)
+plt.title('Gini coefficient for wealth-to-income ratios')
+plt.xlabel('Growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='upper right')
+plt.show()
+fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Nrm_'
+            + Params.spec_name + '.pdf')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Plot wealth ratio Ginis for "no update" economies
+fig = plt.figure()
+plt.plot(annual_growthFactors, aNrmGini_no_update, '-ko', label='T_age=400 (124yrs)')
+colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
+for j in range(len(T_age_list)):
+    plt.plot(annual_growthFactors, aNrmGinis_no_update[j], '-o', color=next(colors),
+             label='T_age=' + str(T_age_list[j]))
+plt.axvline(x=estimation_growth**4)
+plt.title('Gini coefficient for wealth-to-income ratios (no update)')
+plt.xlabel('Growth factor',fontsize=12)
+plt.ylabel('Gini coefficient',fontsize=12)
+plt.legend(loc='upper right')
+plt.show()
+fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Nrm_no_update'
+            + Params.spec_name + '.pdf')
 
 
 
