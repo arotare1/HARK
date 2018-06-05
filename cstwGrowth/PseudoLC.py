@@ -4,11 +4,11 @@ don't survive beyond a certain age T_age.
 
 The exercise is done for two cases:
 Case 1. Agents update their consumption rule when growth changes
-    Case 1a. T_age == 400 (this is the default value and corresponds to a maximum age of 24+400/4=124 yrs)
+    Case 1a. T_age == 160 (this is the default value and corresponds to a maximum age of 24+160/4=64 yrs)
     Case 1b. T_age == 200 (this corresponds to a maximum age of 24+200/4=74 yrs)
     Case 1c. T_age == 100 (this corresponds to a maximum age of 24+100/4=49 yrs)
 Case 2. Agents DO NOT update their consumption rule when growth changes
-    Case 2a. T_age == 400 (this is the default value and corresponds to a maximum age of 24+400/4=124 yrs)
+    Case 2a. T_age == 160 (this is the default value and corresponds to a maximum age of 24+160/4=64 yrs)
     Case 2b. T_age == 200 (this corresponds to a maximum age of 24+200/4=74 yrs)
     Case 2c. T_age == 100 (this corresponds to a maximum age of 24+100/4=49 yrs)
 
@@ -55,7 +55,7 @@ with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.p
     center_estimate, spread_estimate, estimation_growth = pickle.load(f)
 
 #----------------------------------------------------------------------------------
-# Case 1a. Agents update their consumption rule when growth changes. T_age==400
+# Case 1a. Agents update their consumption rule when growth changes. T_age==160
 #----------------------------------------------------------------------------------
 
 # Load previously computed inequality data
@@ -72,7 +72,7 @@ with open('./Results/' + path_estimation_growth + Params.spec_name + '.pkl') as 
     aNrmPercentilesSim = pickle.load(f)
     
 #--------------------------------------------------------------------------------------
-# Case 2a. Agents DO NOT update their consumption rule when growth changes. T_age=400
+# Case 2a. Agents DO NOT update their consumption rule when growth changes. T_age=160
 #--------------------------------------------------------------------------------------
     
 # Load previously computed inequality data
@@ -260,7 +260,7 @@ aNrmGinis_no_update = np.array_split(aNrmGinis_no_update, len(T_age_list))
 
 # Plot wealth level Ginis for "update" economies
 fig = plt.figure()
-plt.plot(annual_growthFactors, aLvlGini, '-ko', label='T_age=400 (124yrs)')
+plt.plot(annual_growthFactors, aLvlGini, '-ko', label='T_age=160 (64yrs)')
 colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
 for j in range(len(T_age_list)):
     plt.plot(annual_growthFactors, aLvlGinis[j], '-o', color=next(colors),
@@ -276,7 +276,7 @@ fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Lvl_'
 
 # Plot wealth level Ginis for "no update" economies
 fig = plt.figure()
-plt.plot(annual_growthFactors, aLvlGini_no_update, '-ko', label='T_age=400 (124yrs)')
+plt.plot(annual_growthFactors, aLvlGini_no_update, '-ko', label='T_age=160 (64yrs)')
 colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
 for j in range(len(T_age_list)):
     plt.plot(annual_growthFactors, aLvlGinis_no_update[j], '-o', color=next(colors),
@@ -292,7 +292,7 @@ fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Lvl_no_update
 
 # Plot wealth ratio Ginis for "update" economies
 fig = plt.figure()
-plt.plot(annual_growthFactors, aNrmGini, '-ko', label='T_age=400 (124yrs)')
+plt.plot(annual_growthFactors, aNrmGini, '-ko', label='T_age=160 (64yrs)')
 colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
 for j in range(len(T_age_list)):
     plt.plot(annual_growthFactors, aNrmGinis[j], '-o', color=next(colors),
@@ -308,7 +308,7 @@ fig.savefig('./Figures/' + path_estimation_growth + 'PseudoLC/Gini_Nrm_'
 
 # Plot wealth ratio Ginis for "no update" economies
 fig = plt.figure()
-plt.plot(annual_growthFactors, aNrmGini_no_update, '-ko', label='T_age=400 (124yrs)')
+plt.plot(annual_growthFactors, aNrmGini_no_update, '-ko', label='T_age=160 (64yrs)')
 colors = iter(cm.rainbow(np.linspace(0, 1, len(T_age_list))))
 for j in range(len(T_age_list)):
     plt.plot(annual_growthFactors, aNrmGinis_no_update[j], '-o', color=next(colors),
