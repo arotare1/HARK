@@ -128,7 +128,7 @@ Economy.spread_estimate = spread_estimate
 Economy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,
                          spread_estimate,Params.dist_type)
 
-annual_growthFactors = np.arange(1.0, 1.07, 0.01)
+annual_growthFactors = np.arange(1.0, 1.03, 0.01)
 growthFactors = np.power(annual_growthFactors, 0.25)
 LorenzLongLvlSim = []
 LorenzLongNrmSim = []
@@ -146,8 +146,8 @@ for i in range(len(growthFactors)):
     NewEconomy = deepcopy(Economy)
     for j in range(len(NewEconomy.agents)):
         if Params.do_lifecycle:
-            NewEconomy.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
-            NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
+            #NewEconomy.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
+            NewEconomy.agents[j].PermGroFacAgg = g
         else:
             NewEconomy.agents[j].PermGroFac = [g]
             NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
