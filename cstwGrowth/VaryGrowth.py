@@ -6,6 +6,10 @@ This is done by FindEstimates.py
 '''
 
 import pdb
+import sys 
+import os
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../ConsumptionSaving'))
 import numpy as np
 from copy import copy, deepcopy
 from time import clock
@@ -19,7 +23,7 @@ from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
 
 Params.do_param_dist = True    # Do param-dist version if True, param-point if False
-Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
+Params.do_lifecycle = True     # Use lifecycle model if True, perpetual youth if False
 which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
                                 # 1.0 for Baseline, >1 for HighEstimationGrowth
 path_estimation_growth = 'Baseline/' if which_estimation_growth == 1 else 'HighEstimationGrowth/'
@@ -29,7 +33,8 @@ Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 
 # Load previously computed estimates
-with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.pkl') as f:
+# For now, use "fake" parameters which were estimated for PY with PermGroFac 1.0 and T_age=160
+with open('./ParamsEstimates/' + path_estimation_growth + 'DistPY' + '.pkl') as f:
     center_estimate, spread_estimate, estimation_growth = pickle.load(f)
 
 # Set number of beta types
@@ -51,7 +56,7 @@ else: # This is hacky until I can find the liquid wealth data and import it
 # Make AgentTypes
 if Params.do_lifecycle:
     DropoutType = cstwMPCagent(**Params.init_dropout)
-    DropoutType.PermGroFac = [estimation_growth]    # Update growth factor
+    DropoutType.PermGroFac = [g*estimation_growth for g in DropoutType.PermGroFac]   # Update growth factor
     DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
     HighschoolType = deepcopy(DropoutType)
     HighschoolType(**Params.adj_highschool)
@@ -146,7 +151,7 @@ for i in range(len(growthFactors)):
         else:
             NewEconomy.agents[j].PermGroFac = [g]
             NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
-    
+    #pdb.set_trace()
     t_start = clock()
     NewEconomy.solve()
     t_end = clock()

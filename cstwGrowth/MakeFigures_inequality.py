@@ -16,7 +16,7 @@ import SetupParams as Params
 from cstwGrowth import getLorenzShares, getGini
 
 Params.do_param_dist = True    # Do param-dist version if True, param-point if False
-Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
+Params.do_lifecycle = True     # Use lifecycle model if True, perpetual youth if False
 which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
                                 # 1.0 for Baseline, >1 for HighEstimationGrowth
 path_estimation_growth = 'Baseline/' if which_estimation_growth == 1 else 'HighEstimationGrowth/'
@@ -29,7 +29,8 @@ Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 lorenz_long_data = np.hstack((np.array(0.0),getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=np.arange(0.01,1.0,0.01).tolist()),np.array(1.0)))
 
 # Load estimates and growth factor used when finding the estimates
-with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.pkl') as f:
+# For now, use "fake" parameters which were estimated for PY with PermGroFac 1.0 and T_age=160
+with open('./ParamsEstimates/' + path_estimation_growth + 'DistPY' + '.pkl') as f:
     center_estimate, spread_estimate, estimation_growth = pickle.load(f)
 
 # Load inequality stats

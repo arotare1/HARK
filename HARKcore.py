@@ -1115,6 +1115,8 @@ class Market(HARKobject):
         '''        
         self.reset() # Initialize the state of the market
         for t in range(self.act_T):
+            if t%100 == 0:
+                print('Now in makeHistory, simulation number ' + str(t))
             self.sow()       # Distribute aggregated information/state to agents
             self.cultivate() # Agents take action
             self.reap()      # Collect individual data from agents
