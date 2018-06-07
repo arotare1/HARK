@@ -317,7 +317,7 @@ dev.off()
 # Plot Credit Suisse data
 #-------------------------------
 
-# Plot mean-to-median ratio of net wealth by GDP growth rate
+# Plot Gini of net wealth by GDP growth rate
 ggplot(cs_wealth, aes(x=GDP_84_14, y=Gini/100)) +
   geom_point() +
   geom_text_repel(aes(label=CountryCode)) +
@@ -326,7 +326,7 @@ ggplot(cs_wealth, aes(x=GDP_84_14, y=Gini/100)) +
   labs(x='Annual GDP growth rate', y='Gini coefficient of net wealth', 
        title='Gini coefficient of net wealth by GDP growth rate over 30 years')
 
-# Plot mean-to-median ratio of net wealth by GDP growth rate for a subset of countries
+# Plot Gini of net wealth by GDP growth rate for a subset of countries
 ggplot(cs_wealth[cs_wealth$g16==1,], aes(x=GDP_84_14, y=Gini/100)) +
   geom_point() +
   geom_label_repel(aes(label=CountryCode)) +
