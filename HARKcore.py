@@ -937,9 +937,9 @@ class Market(HARKobject):
         -------
         None
         '''
-        #for this_type in self.agents:
-        #    this_type.solve()
-        multiThreadCommands(self.agents,['solve()'])
+        for this_type in self.agents:
+            this_type.solve()
+        #multiThreadCommands(self.agents,['solve()'])
     
     def solve(self):
         '''

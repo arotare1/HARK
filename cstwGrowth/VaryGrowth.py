@@ -146,12 +146,12 @@ for i in range(len(growthFactors)):
     NewEconomy = deepcopy(Economy)
     for j in range(len(NewEconomy.agents)):
         if Params.do_lifecycle:
-            #NewEconomy.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
-            NewEconomy.agents[j].PermGroFacAgg = g
+            NewEconomy.agents[j].PermGroFac = [i*g for i in Economy.agents[j].PermGroFac]
+            #NewEconomy.agents[j].PermGroFacAgg = g
         else:
             NewEconomy.agents[j].PermGroFac = [g]
-            NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
-    #pdb.set_trace()
+            #NewEconomy.agents[j].PermGroFacAgg = 1.0  # Turn off technological growth
+    pdb.set_trace()
     t_start = clock()
     NewEconomy.solve()
     t_end = clock()
