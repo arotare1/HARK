@@ -360,30 +360,31 @@ class cstwMPCmarket(EstimationMarketClass):
         
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
+        results_string = 'PermGroFac=' + str(self.agents[0].PermGroFac[0]) + ', PermGroFacAgg=' + str(self.agents[0].PermGroFacAgg) + '\n'
         results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
-        results_string += 'Average MPC for all consumers is ' + mystr(MPCall) + '\n'
-        results_string += 'Average MPC in the top percentile of W/Y is ' + mystr(MPCbyWealthRatio[0]) + '\n'
-        results_string += 'Average MPC in the top decile of W/Y is ' + mystr(MPCbyWealthRatio[1]) + '\n'
-        results_string += 'Average MPC in the top quintile of W/Y is ' + mystr(MPCbyWealthRatio[2]) + '\n'
-        results_string += 'Average MPC in the second quintile of W/Y is ' + mystr(MPCbyWealthRatio[3]) + '\n'
-        results_string += 'Average MPC in the middle quintile of W/Y is ' + mystr(MPCbyWealthRatio[4]) + '\n'
-        results_string += 'Average MPC in the fourth quintile of W/Y is ' + mystr(MPCbyWealthRatio[5]) + '\n'
-        results_string += 'Average MPC in the bottom quintile of W/Y is ' + mystr(MPCbyWealthRatio[6]) + '\n'
-        results_string += 'Average MPC in the top percentile of y is ' + mystr(MPCbyIncome[0]) + '\n'
-        results_string += 'Average MPC in the top decile of y is ' + mystr(MPCbyIncome[1]) + '\n'
-        results_string += 'Average MPC in the top quintile of y is ' + mystr(MPCbyIncome[2]) + '\n'
-        results_string += 'Average MPC in the second quintile of y is ' + mystr(MPCbyIncome[3]) + '\n'
-        results_string += 'Average MPC in the middle quintile of y is ' + mystr(MPCbyIncome[4]) + '\n'
-        results_string += 'Average MPC in the fourth quintile of y is ' + mystr(MPCbyIncome[5]) + '\n'
-        results_string += 'Average MPC in the bottom quintile of y is ' + mystr(MPCbyIncome[6]) + '\n'
-        results_string += 'Average MPC for the employed is ' + mystr(MPCemployed) + '\n'
-        results_string += 'Average MPC for the unemployed is ' + mystr(MPCunemployed) + '\n'
-        results_string += 'Average MPC for the retired is ' + mystr(MPCretired) + '\n'
+        results_string += 'Average MPC for all consumers is ' + str(MPCall) + '\n'
+        results_string += 'Average MPC in the top percentile of W/Y is ' + str(MPCbyWealthRatio[0]) + '\n'
+        results_string += 'Average MPC in the top decile of W/Y is ' + str(MPCbyWealthRatio[1]) + '\n'
+        results_string += 'Average MPC in the top quintile of W/Y is ' + str(MPCbyWealthRatio[2]) + '\n'
+        results_string += 'Average MPC in the second quintile of W/Y is ' + str(MPCbyWealthRatio[3]) + '\n'
+        results_string += 'Average MPC in the middle quintile of W/Y is ' + str(MPCbyWealthRatio[4]) + '\n'
+        results_string += 'Average MPC in the fourth quintile of W/Y is ' + str(MPCbyWealthRatio[5]) + '\n'
+        results_string += 'Average MPC in the bottom quintile of W/Y is ' + str(MPCbyWealthRatio[6]) + '\n'
+        results_string += 'Average MPC in the top percentile of y is ' + str(MPCbyIncome[0]) + '\n'
+        results_string += 'Average MPC in the top decile of y is ' + str(MPCbyIncome[1]) + '\n'
+        results_string += 'Average MPC in the top quintile of y is ' + str(MPCbyIncome[2]) + '\n'
+        results_string += 'Average MPC in the second quintile of y is ' + str(MPCbyIncome[3]) + '\n'
+        results_string += 'Average MPC in the middle quintile of y is ' + str(MPCbyIncome[4]) + '\n'
+        results_string += 'Average MPC in the fourth quintile of y is ' + str(MPCbyIncome[5]) + '\n'
+        results_string += 'Average MPC in the bottom quintile of y is ' + str(MPCbyIncome[6]) + '\n'
+        results_string += 'Average MPC for the employed is ' + str(MPCemployed) + '\n'
+        results_string += 'Average MPC for the unemployed is ' + str(MPCunemployed) + '\n'
+        results_string += 'Average MPC for the retired is ' + str(MPCretired) + '\n'
         results_string += 'Of the population with the 1/3 highest MPCs...' + '\n'
-        results_string += mystr(HandToMouthPct[0]*100) + '% are in the bottom wealth quintile,' + '\n'
-        results_string += mystr(HandToMouthPct[1]*100) + '% are in the second wealth quintile,' + '\n'
-        results_string += mystr(HandToMouthPct[2]*100) + '% are in the third wealth quintile,' + '\n'
-        results_string += mystr(HandToMouthPct[3]*100) + '% are in the fourth wealth quintile,' + '\n'
+        results_string += str(HandToMouthPct[0]*100) + '% are in the bottom wealth quintile,' + '\n'
+        results_string += str(HandToMouthPct[1]*100) + '% are in the second wealth quintile,' + '\n'
+        results_string += str(HandToMouthPct[2]*100) + '% are in the third wealth quintile,' + '\n'
+        results_string += str(HandToMouthPct[3]*100) + '% are in the fourth wealth quintile,' + '\n'
         results_string += 'and ' + mystr(HandToMouthPct[4]*100) + '% are in the top wealth quintile.' + '\n'
         results_string += 'LorenzSim = ' + str(LorenzSim) + '\n'
         results_string += 'LorenzNrmSim = ' + str(LorenzNrmSim) + '\n'
@@ -391,7 +392,7 @@ class cstwMPCmarket(EstimationMarketClass):
         
         # Save results to disk
         if spec_name is not None:
-            with open('./Results/' + spec_name + 'Results.txt','w') as f:
+            with open('./Results/new/' + spec_name + '_' + mystr(self.agents[0].PermGroFac[0]) + '_' + mystr(self.agents[0].PermGroFacAgg) + '.txt','w') as f:
                 f.write(results_string)
                 f.close()
         
@@ -620,18 +621,23 @@ if __name__ == '__main__':
             spread_estimate = 0.0
             t_end = clock()
     else:
-        center_estimate = 0.9845787073542119 # from BetaDistPY baseline calibration
-        spread_estimate = 0.01009251456130123 # from BetaDistPY baseline calibration
+        # for DistPY with PermGroFac=1 and PermGroFacAgg=1.015**0.25
+        center_estimate = 0.9836029180748126
+        spread_estimate = 0.012895880885878761
+#        # for DistPY with PermGroFac=1 and PermGroFacAgg=1
+#        center_estimate = 0.9845787073542119 
+#        spread_estimate = 0.01009251456130123
         
     EstimationEconomy.LorenzBool = True
     EstimationEconomy.ManyStatsBool = True
     EstimationEconomy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,spread_estimate,Params.dist_type)
     
-    pdb.set_trace()
+    #pdb.set_trace()
     EstimationEconomy.solve()
     EstimationEconomy.calcLorenzDistance()
     print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate))# + ', took ' + str(t_end-t_start) + ' seconds.')
     EstimationEconomy.center_estimate = center_estimate
     EstimationEconomy.spread_estimate = spread_estimate
     EstimationEconomy.showManyStats(Params.spec_name)
+    
             

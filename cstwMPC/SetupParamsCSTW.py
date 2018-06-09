@@ -7,7 +7,7 @@ from copy import  deepcopy
 import os
 
 # Choose percentiles of the data to match and which estimation to run
-spec_name = 'BetaDistPY_highTFPgrowth' # high=1.045^0.25; low = 1.015^0.25
+spec_name = 'DistPY'
 param_name = 'DiscFac'        # Which parameter to introduce heterogeneity in
 dist_type = 'uniform'         # Which type of distribution to use
 do_lifecycle = False          # Use lifecycle model if True, perpetual youth if False
@@ -76,7 +76,7 @@ aNrmInitStd  = 0.5            # log initial wealth/income standard deviation
 
 # Set population macro parameters
 PopGroFac = 1.01**(0.25)      # Population growth rate
-PermGroFacAgg = 1.045**(0.25) # TFP growth rate
+PermGroFacAgg = 1.0**(0.25) # TFP growth rate
 d_pct = 0.11                  # proportion of HS dropouts
 h_pct = 0.55                  # proportion of HS graduates
 c_pct = 0.34                  # proportion of college graduates
@@ -84,7 +84,7 @@ TypeWeight_lifecycle = [d_pct,h_pct,c_pct]
 
 # Set indiividual parameters for the infinite horizon model
 IndL = 10.0/9.0               # Labor supply per individual (constant)
-PermGroFac_i = [1.000**0.25]  # Permanent income growth factor (no perm growth)
+PermGroFac_i = [1.04**0.25]  # Permanent income growth factor (no perm growth)
 DiscFac_i = 0.97              # Default intertemporal discount factor
 LivPrb_i = [1.0 - 1.0/160.0]  # Survival probability
 PermShkStd_i = [(0.01*4/11)**0.5] # Standard deviation of permanent shocks to income
