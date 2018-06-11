@@ -86,11 +86,12 @@ class cstwMPCmarket(EstimationMarketClass):
     reap_vars = ['aLvlNow','pLvlNow','MPCnow','TranShkNow','EmpNow','t_age']
     sow_vars  = [] # Nothing needs to be sent back to agents in the idiosyncratic shocks version
     const_vars = ['LorenzBool','ManyStatsBool']
-    track_vars = ['MaggNow','AaggNow','KtoYnow',
-                  'LorenzLvl','LorenzLongLvl', 'LorenzLongNrm',
-                  'aLvlGini', 'aNrmGini',
-                  'aLvlMeanToMedian', 'aNrmMeanToMedian',
+    track_vars = ['MaggNow','AaggNow','KtoYnow', 'LorenzLvl','LorenzLongLvl', 'LorenzLongNrm', 
+                  'LorenzLongInc', 'MPCall','MPCretired','MPCemployed','MPCunemployed','MPCbyIncome',
+                  'MPCbyWealthRatio','HandToMouthPct', 'aLvlMean', 'aNrmMean', 'aLvlMedian', 'aNrmMedian',
                   'aLvlPercentiles', 'aNrmPercentiles']
+#                  'aLvlGini', 'aNrmGini']
+                  
     dyn_vars = [] # No dynamics in the idiosyncratic shocks version
     
     def __init__(self,**kwds):
@@ -158,10 +159,11 @@ class cstwMPCmarket(EstimationMarketClass):
         # Combine inputs into single arrays
         aLvl = np.hstack(aLvlNow)
         pLvl = np.hstack(pLvlNow)
-        TranShk = np.hstack(TranShkNow)
-        IncLvl = TranShk*pLvl # Labor income this period
-        aNrm = aLvl/pLvl # wealth-to-income ratio
         age  = np.hstack(t_age)
+        TranShk = np.hstack(TranShkNow)
+        Emp = np.hstack(EmpNow)
+        aNrm = aLvl/pLvl # Wealth-to-income ratio
+        IncLvl = TranShk*pLvl # Labor income this period
         
         # Calculate the capital to income ratio in the economy
         CohortWeight = self.PopGroFac**(-age)
@@ -173,6 +175,7 @@ class cstwMPCmarket(EstimationMarketClass):
         # Store Lorenz data if requested
         self.LorenzLongLvl = np.nan
         self.LorenzLongNrm = np.nan
+        self.LorenzLongInc = np.nan
         if LorenzBool:
             wealth_shares = getLorenzShares(aLvl,weights=CohortWeight,
                                             percentiles=self.LorenzPercentiles,
@@ -183,6 +186,8 @@ class cstwMPCmarket(EstimationMarketClass):
                 self.LorenzLongLvl = getLorenzShares(aLvl,weights=CohortWeight,
                                                      percentiles=np.arange(0.01,1.0,0.01),presorted=False)
                 self.LorenzLongNrm = getLorenzShares(aNrm,weights=CohortWeight,
+                                                     percentiles=np.arange(0.01,1.0,0.01),presorted=False)
+                self.LorenzLongInc = getLorenzShares(pLvl,weights=CohortWeight,
                                                      percentiles=np.arange(0.01,1.0,0.01),presorted=False)                
         else: # Store nothing if we don't want Lorenz data
             self.LorenzLvl = np.nan
@@ -190,25 +195,70 @@ class cstwMPCmarket(EstimationMarketClass):
         # Calculate a whole bunch of statistics if requested
         if ManyStatsBool:
             # Compute statistics for wealth levels
-            self.aLvlGini = getGini(aLvl,weights=CohortWeight,presorted=False)
-            self.aLvlMeanToMedian = np.mean(aLvl)/np.median(aLvl)
+#            self.aLvlGini = getGini(aLvl,weights=CohortWeight,presorted=False)
+            self.aLvlMean = np.mean(aLvl)
+            self.aLvlMedian = np.median(aLvl)
             self.aLvlPercentiles = getPercentiles(aLvl,weights=CohortWeight,
                                                   percentiles=np.arange(0.01,1.0,0.01),presorted=False)
             
             # Compute statistics for wealth-to-income ratios
-            self.aNrmGini = getGini(aNrm,weights=CohortWeight,presorted=False)
-            self.aNrmMeanToMedian = np.mean(aNrm)/np.median(aNrm)
+#            self.aNrmGini = getGini(aNrm,weights=CohortWeight,presorted=False)
+            self.aNrmMean = np.mean(aNrm)
+            self.aNrmMedian = np.median(aNrm)
             self.aNrmPercentiles = getPercentiles(aNrm,weights=CohortWeight,
                                                   percentiles=np.arange(0.01,1.0,0.01),presorted=False)
+            
+            # Calculate overall population MPC and by subpopulations
+            MPC  = np.hstack(MPCnow)
+            MPCannual = 1.0 - (1.0 - MPC)**4
+            self.MPCall = np.sum(MPCannual*CohortWeight)/np.sum(CohortWeight)
+            employed =  Emp
+            unemployed = np.logical_not(employed)
+            if self.T_retire > 0: # Adjust for the lifecycle model, where agents might be retired instead
+                unemployed = np.logical_and(unemployed,age < self.T_retire)
+                employed   = np.logical_and(employed,age < self.T_retire)
+                retired    = age >= self.T_retire
+            else:
+                retired    = np.zeros_like(unemployed,dtype=bool)
+            self.MPCunemployed = np.sum(MPCannual[unemployed]*CohortWeight[unemployed])/np.sum(CohortWeight[unemployed])
+            self.MPCemployed   = np.sum(MPCannual[employed]*CohortWeight[employed])/np.sum(CohortWeight[employed])
+            self.MPCretired    = np.sum(MPCannual[retired]*CohortWeight[retired])/np.sum(CohortWeight[retired])
+            self.MPCbyWealthRatio = calcSubpopAvg(MPCannual,aNrm,self.cutoffs,CohortWeight)
+            self.MPCbyIncome      = calcSubpopAvg(MPCannual,IncLvl,self.cutoffs,CohortWeight)
+            
+            # Calculate the wealth quintile distribution of "hand to mouth" consumers
+            quintile_cuts = getPercentiles(aLvl,weights=CohortWeight,percentiles=[0.2, 0.4, 0.6, 0.8])
+            wealth_quintiles = np.ones(aLvl.size,dtype=int)
+            wealth_quintiles[aLvl > quintile_cuts[0]] = 2
+            wealth_quintiles[aLvl > quintile_cuts[1]] = 3
+            wealth_quintiles[aLvl > quintile_cuts[2]] = 4
+            wealth_quintiles[aLvl > quintile_cuts[3]] = 5
+            MPC_cutoff = getPercentiles(MPCannual,weights=CohortWeight,percentiles=[2.0/3.0]) # Looking at consumers with MPCs in the top 1/3
+            these = MPCannual > MPC_cutoff
+            in_top_third_MPC = wealth_quintiles[these]
+            temp_weights = CohortWeight[these]
+            hand_to_mouth_total = np.sum(temp_weights)
+            hand_to_mouth_pct = []
+            for q in range(1,6):
+                hand_to_mouth_pct.append(np.sum(temp_weights[in_top_third_MPC == q])/hand_to_mouth_total)
+            self.HandToMouthPct = np.array(hand_to_mouth_pct)
 
         else: # If we don't want these stats, just put empty values in history
-            self.aLvlGini = np.nan
-            self.aNrmGini = np.nan
-            self.aLvlMeanToMedian = np.nan
-            self.aNrmMeanToMedian = np.nan
+#            self.aLvlGini = np.nan
+#            self.aNrmGini = np.nan
+            self.aLvlMean = np.nan
+            self.aNrmMean = np.nan
+            self.aLvlMedian = np.nan
+            self.aNrmMedian = np.nan
             self.aLvlPercentiles = np.nan
             self.aNrmPercentiles = np.nan
-            
+            self.MPCall = np.nan
+            self.MPCunemployed = np.nan
+            self.MPCemployed = np.nan
+            self.MPCretired = np.nan
+            self.MPCbyWealthRatio = np.nan
+            self.MPCbyIncome = np.nan
+            self.HandToMouthPct = np.nan
             
     def distributeParams(self,param_name,param_count,center,spread,dist_type):
         '''
@@ -304,26 +354,41 @@ class cstwMPCmarket(EstimationMarketClass):
         None
         '''
         
-        # Compute and store Lorenz curves for wealth levels and wealth-to-income ratios
+        # Compute and store Lorenz curves
         self.LorenzLongLvlSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLongLvl_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
         self.LorenzLongNrmSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLongNrm_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
+        self.LorenzLongIncSim = np.hstack((np.array(0.0),np.mean(np.array(self.LorenzLongInc_hist)[self.ignore_periods:,:],axis=0),np.array(1.0)))
         
         # Compute and store average inequality data across histories
-        self.aLvlGiniSim = np.mean(self.aLvlGini_hist[self.ignore_periods:])
-        self.aNrmGiniSim = np.mean(self.aNrmGini_hist[self.ignore_periods:])
-        self.aLvlMeanToMedianSim = np.mean(self.aLvlMeanToMedian_hist[self.ignore_periods:])
-        self.aNrmMeanToMedianSim = np.mean(self.aNrmMeanToMedian_hist[self.ignore_periods:])
+#        self.aLvlGiniSim = np.mean(self.aLvlGini_hist[self.ignore_periods:])
+#        self.aNrmGiniSim = np.mean(self.aNrmGini_hist[self.ignore_periods:])
+        self.aLvlMeanSim = np.mean(self.aLvlMean_hist[self.ignore_periods:])
+        self.aNrmMeanSim = np.mean(self.aNrmMean_hist[self.ignore_periods:])
+        self.aLvlMedianSim = np.mean(self.aLvlMedian_hist[self.ignore_periods:])
+        self.aNrmMedianSim = np.mean(self.aNrmMedian_hist[self.ignore_periods:])
         self.aLvlPercentilesSim = np.hstack(np.mean(np.array(self.aLvlPercentiles_hist)[self.ignore_periods:,:],axis=0))
         self.aNrmPercentilesSim = np.hstack(np.mean(np.array(self.aNrmPercentiles_hist)[self.ignore_periods:,:],axis=0))
+        
+        # Compute and store MPC overall and by subpopulations
+        self.MPCallSim = np.mean(self.MPCall_hist[self.ignore_periods:])
+        self.MPCemployedSim = np.mean(self.MPCemployed_hist[self.ignore_periods:])
+        self.MPCunemployedSim = np.mean(self.MPCunemployed_hist[self.ignore_periods:])
+        self.MPCretiredSim = np.mean(self.MPCretired_hist[self.ignore_periods:])
+        self.MPCbyIncomeSim = np.mean(np.array(self.MPCbyIncome_hist)[self.ignore_periods:,:],axis=0)
+        self.MPCbyWealthRatioSim = np.mean(np.array(self.MPCbyWealthRatio_hist)[self.ignore_periods:,:],axis=0)
+        self.HandToMouthPctSim = np.mean(np.array(self.HandToMouthPct_hist)[self.ignore_periods:,:],axis=0)
                      
         # Make a string of results to display
         results_string = 'Estimate is center=' + str(self.center_estimate) + ', spread=' + str(self.spread_estimate) + '\n'
         if hasattr(self, 'LorenzDistance'): # This attribute only exists if we run the estimation
             results_string += 'Lorenz distance is ' + str(self.LorenzDistance) + '\n'
-        results_string += 'Gini coefficient for wealth levels is ' + str(self.aLvlGiniSim) + '\n'
-        results_string += 'Gini coefficient for wealth-to-income ratios is ' + str(self.aNrmGiniSim) + '\n'
-        results_string += 'Mean to median ratio for wealth levels is ' + str(self.aLvlMeanToMedianSim) + '\n'
-        results_string += 'Mean to median ratio for wealth-to-income ratios is ' + str(self.aNrmMeanToMedianSim) + '\n'
+#        results_string += 'Gini coefficient for wealth levels is ' + str(self.aLvlGiniSim) + '\n'
+#        results_string += 'Gini coefficient for wealth-to-income ratios is ' + str(self.aNrmGiniSim) + '\n'
+        results_string += 'Mean to median ratio for wealth levels is ' + str(self.aLvlMeanSim/self.aLvlMedianSim) + '\n'
+        results_string += 'Mean to median ratio for wealth-to-income ratios is ' + str(self.aNrmMeanSim/self.aNrmMedianSim) + '\n'
+        results_string += 'Average MPC for all consumers is ' + str(self.MPCallSim) + '\n'
+        results_string += 'Average MPC in the top percentile of W/Y is ' + str(self.MPCbyWealthRatioSim[0]) + '\n'
+        results_string += 'Average MPC in the top percentile of y is ' + str(self.MPCbyIncomeSim[0])
         print(results_string)
         
         
