@@ -64,7 +64,7 @@ world_dist <- bind_rows(world_dist, wealth_spain)
 
 get_lorenz_curve <- function(data, ISO = "US", YEAR = 2014) {
   output <- data %>% filter(iso == ISO & year == YEAR) %>% select(p, botsh)
-  name <- paste(c("wealthData_", ISO, "_", as.character(YEAR), ".csv"), collapse = "")
+  name <- paste(c("../../wealthData_", ISO, "_", as.character(YEAR), ".csv"), collapse = "")
   write_csv(output, name)
 }
 
