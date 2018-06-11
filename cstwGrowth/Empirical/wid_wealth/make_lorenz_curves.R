@@ -59,17 +59,38 @@ world_dist <- bind_rows(world_dist, wealth_spain)
 
 # ----------------------------------------------------------------------------------------- #
 # Write function that takes a country and a year as input and creates a .csv file with the 
-# corresponding wealth shares
+# corresponding wealth shares and the average growth rate from the previous LAG years
 # ----------------------------------------------------------------------------------------- #
 
-get_lorenz_curve <- function(data, ISO = "US", YEAR = 2014) {
-  output <- data %>% filter(iso == ISO & year == YEAR) %>% select(p, botsh)
+# Import real GDP data from the World Bank
+# URL: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
+gdp_raw <- read.csv('../worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
+
+get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
+  # Get average real GDP growth from previous LAG years
+  if(ISO=="CN") CountryCode <- "CHN"
+  if(ISO=="ES") CountryCode <- "ESP"
+  if(ISO=="FR") CountryCode <- "FRA"
+  if(ISO=="GB") CountryCode <- "GBR"
+  if(ISO=="US") CountryCode <- "USA"
+  first <- as.character(YEAR - LAG)
+  last <- as.character(YEAR)
+  gdp_first <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(first, colnames(gdp_raw))]
+  gdp_last <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(last, colnames(gdp_raw))]
+  growth_factor <- (gdp_last/gdp_first)^(1/LAG)
+  
+  output <- world_dist %>% filter(iso == ISO & year == YEAR) %>% 
+    select(p, botsh) %>%
+    mutate(growth_factor = growth_factor)
   name <- paste(c("../../wealthData_", ISO, "_", as.character(YEAR), ".csv"), collapse = "")
   write_csv(output, name)
 }
 
-get_lorenz_curve(world_dist, ISO = "FR", YEAR = 2014)
-
+get_lorenz_curve(ISO = "CN", YEAR = 1988)
+get_lorenz_curve(ISO = "ES", YEAR = 1988)
+get_lorenz_curve(ISO = "FR", YEAR = 1988)
+get_lorenz_curve(ISO = "GB", YEAR = 1988)
+get_lorenz_curve(ISO = "US", YEAR = 1988)
 
 
 
