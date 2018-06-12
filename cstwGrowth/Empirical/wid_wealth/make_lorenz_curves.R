@@ -66,22 +66,31 @@ world_dist <- bind_rows(world_dist, wealth_spain)
 # URL: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
 gdp_raw <- read.csv('../worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
 
+# Import real GDP growth data from the World Bank
+# URL: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG
+gdp_growth <- read.csv('../worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
+
 get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
-  # Get average real GDP growth from previous LAG years
+  # Get average real GDP growth from previous LAG years. Use two measures for consistency
   if(ISO=="CN") CountryCode <- "CHN"
   if(ISO=="ES") CountryCode <- "ESP"
   if(ISO=="FR") CountryCode <- "FRA"
   if(ISO=="GB") CountryCode <- "GBR"
   if(ISO=="US") CountryCode <- "USA"
   first <- as.character(YEAR - LAG)
+  first_plus_one <- as.character(YEAR - LAG + 1)
   last <- as.character(YEAR)
   gdp_first <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(first, colnames(gdp_raw))]
   gdp_last <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(last, colnames(gdp_raw))]
-  growth_factor <- (gdp_last/gdp_first)^(1/LAG)
+  growth_factor1 <- (gdp_last/gdp_first)^(1/LAG)
+  growth_rates <- as.numeric(gdp_growth[gdp_raw$CountryCode==CountryCode,
+                                        grep(first_plus_one, colnames(gdp_raw)):grep(last, colnames(gdp_raw))])
+  growth_factor2 <- mean(growth_rates)/100 + 1
   
   output <- world_dist %>% filter(iso == ISO & year == YEAR) %>% 
     select(p, botsh) %>%
-    mutate(growth_factor = growth_factor)
+    mutate(growth_factor1 = growth_factor1,
+           growth_factor2 = growth_factor2)
   name <- paste(c("../../wealthData_", ISO, "_", as.character(YEAR), ".csv"), collapse = "")
   write_csv(output, name)
 }

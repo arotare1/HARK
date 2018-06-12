@@ -17,7 +17,7 @@ from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
 
 
-Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 estimation_growth = 1.0         # Set growth rate to be used when estimating parameters 
                                 # 1.0 for Baseline, >1 for HighEstimationGrowth
@@ -154,10 +154,34 @@ else:
 
 print('Estimate is center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
 
-# Save estimates and the growth factor used when finding the estimates
+# Save estimates and a bunch of parameters used in estimation
 with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.pkl', 'w') as f:
-    pickle.dump([center_estimate, spread_estimate, EstimationEconomy.agents[0].PermGroFac[0]], f)
+    pickle.dump([center_estimate,
+                 spread_estimate, 
+                 EstimationEconomy.agents[0].PermGroFac[0],
+                 EstimationEconomy.agents[0].T_age,
+                 EstimationEconomy.agents[0].Rfree,
+                 EstimationEconomy.agents[0].CRRA], f)
 with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.txt','w') as f:
-    f.write('center_estimate = %s \nspread_estimate = %s \ngrowth factor used for estimation is %s'
-            % (center_estimate, spread_estimate, EstimationEconomy.agents[0].PermGroFac[0]))
+    f.write('center_estimate = %s \
+            \nspread_estimate = %s \
+            \ngrowth factor used for estimation is %s \
+            \nT_age used for estimation is %s \
+            \nRfree used for estimation is %s \
+            \nCRRA is %s'
+            % (center_estimate,
+               spread_estimate,
+               EstimationEconomy.agents[0].PermGroFac[0],
+               EstimationEconomy.agents[0].T_age,
+               EstimationEconomy.agents[0].Rfree,
+               EstimationEconomy.agents[0].CRRA))
+    
+# Save EstimationEconomy as .pkl
+with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '_EstimationEconomy.pkl', 'wb') as f:
+    pickle.dump(EstimationEconomy, f, pickle.HIGHEST_PROTOCOL)
+
+
+
+
+    
     

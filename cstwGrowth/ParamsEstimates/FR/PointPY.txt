@@ -1,0 +1,6 @@
+center_estimate = 0.996760507303                 
+spread_estimate = 0.0                 
+growth factor used for estimation is 1.0090542854500888                 
+T_age used for estimation is 400                 
+Rfree used for estimation is 1.01635220126                 
+CRRA is 1.0
