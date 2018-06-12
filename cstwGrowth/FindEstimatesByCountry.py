@@ -21,7 +21,7 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
                         
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 # Update spec_name
@@ -34,8 +34,8 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
     
-country_list = ['US', 'FR', 'GB', 'ES']
-#country_list = ['GB']
+#country_list = ['US', 'FR', 'GB', 'ES']
+country_list = ['US']
 
 for country in country_list:
     # Read Lorenz curve and growth to be used in estimation from the corresponding .csv file
@@ -129,59 +129,76 @@ for country in country_list:
             
     else:
         print('Parameter range for ' + Params.param_name + ' has not been defined!')
-    
-    if Params.do_param_dist:
-        # Run the param-dist estimation
-        paramDistObjective = lambda spread : findLorenzDistanceAtTargetKY(Economy = EstimationEconomy,
-                                                                          param_name = Params.param_name,
-                                                                          param_count = Params.pref_type_count,
-                                                                          center_range = param_range,
-                                                                          spread = spread,
-                                                                          dist_type = Params.dist_type)
-        t_start = clock()
-        spread_estimate = golden(paramDistObjective,brack=spread_range,tol=1e-4)
-        center_estimate = EstimationEconomy.center_save
-        t_end = clock()
-    else:
-        # Run the param-point estimation only
-        paramPointObjective = lambda center : getKYratioDifference(Economy = EstimationEconomy,
-                                                                   param_name = Params.param_name,
-                                                                   param_count = Params.pref_type_count,
-                                                                   center = center,
-                                                                   spread = 0.0,
-                                                                   dist_type = Params.dist_type)
-        t_start = clock()
-        center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
-        spread_estimate = 0.0
-        t_end = clock()
-    
-    print('For country ' + country +' center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
-    
-    # Save estimates and a bunch of parameters used in estimation
-    with open('./ParamsEstimates/' + country +'/' + Params.spec_name + '.pkl', 'w') as f:
-        pickle.dump([center_estimate,
-                     spread_estimate, 
-                     EstimationEconomy.agents[0].PermGroFac[0],
-                     EstimationEconomy.agents[0].T_age,
-                     EstimationEconomy.agents[0].Rfree,
-                     EstimationEconomy.agents[0].CRRA], f)
-    with open('./ParamsEstimates/' + country +'/' + Params.spec_name + '.txt','w') as f:
-        f.write('center_estimate = %s \
-                \nspread_estimate = %s \
-                \ngrowth factor used for estimation is %s \
-                \nT_age used for estimation is %s \
-                \nRfree used for estimation is %s \
-                \nCRRA is %s'
-                % (center_estimate,
-                   spread_estimate,
-                   EstimationEconomy.agents[0].PermGroFac[0],
-                   EstimationEconomy.agents[0].T_age,
-                   EstimationEconomy.agents[0].Rfree,
-                   EstimationEconomy.agents[0].CRRA))
         
-    # Save EstimationEconomy as .pkl
-    with open('./ParamsEstimates/' + country +'/' + Params.spec_name + '_EstimationEconomy.pkl', 'wb') as f:
-        pickle.dump(EstimationEconomy, f, pickle.HIGHEST_PROTOCOL)
+    # Only run estimation if getKYratioDifference has different signs for param_range
+    # o.w. the loop breaks and we waste time
+    x = getKYratioDifference(Economy = EstimationEconomy,
+                                       param_name = Params.param_name,
+                                       param_count = Params.pref_type_count,
+                                       center = 0.95,
+                                       spread = 0.006,
+                                       dist_type = Params.dist_type)
+    y = getKYratioDifference(Economy = EstimationEconomy,
+                                       param_name = Params.param_name,
+                                       param_count = Params.pref_type_count,
+                                       center = 0.999,
+                                       spread = 0.006,
+                                       dist_type = Params.dist_type)
+    if x*y > 0:
+        print('Estimation failed for ' + country)
+    else:
+        if Params.do_param_dist:
+            # Run the param-dist estimation
+            paramDistObjective = lambda spread : findLorenzDistanceAtTargetKY(Economy = EstimationEconomy,
+                                                                              param_name = Params.param_name,
+                                                                              param_count = Params.pref_type_count,
+                                                                              center_range = param_range,
+                                                                              spread = spread,
+                                                                              dist_type = Params.dist_type)
+            t_start = clock()
+            spread_estimate = golden(paramDistObjective,brack=spread_range,tol=1e-4)
+            center_estimate = EstimationEconomy.center_save
+            t_end = clock()
+        else:
+            # Run the param-point estimation only
+            paramPointObjective = lambda center : getKYratioDifference(Economy = EstimationEconomy,
+                                                                       param_name = Params.param_name,
+                                                                       param_count = Params.pref_type_count,
+                                                                       center = center,
+                                                                       spread = 0.0,
+                                                                       dist_type = Params.dist_type)
+            t_start = clock()
+            center_estimate = brentq(paramPointObjective,param_range[0],param_range[1],xtol=1e-6)
+            spread_estimate = 0.0
+            t_end = clock()
+        
+        print('For country ' + country +' center=' + str(center_estimate) + ', spread=' + str(spread_estimate) + ', took ' + str(t_end-t_start) + ' seconds.')
+        
+        # Save estimates and a bunch of parameters used in estimation
+        with open('./ParamsEstimates/' + country +'/' + Params.spec_name + '.pkl', 'w') as f:
+            pickle.dump([center_estimate,
+                         spread_estimate, 
+                         EstimationEconomy.agents[0].PermGroFac[0],
+                         EstimationEconomy.agents[0].T_age,
+                         EstimationEconomy.agents[0].Rfree,
+                         EstimationEconomy.agents[0].CRRA], f)
+        with open('./ParamsEstimates/' + country +'/' + Params.spec_name + '.txt','w') as f:
+            f.write('center_estimate = %s \
+                    \nspread_estimate = %s \
+                    \ngrowth factor used for estimation is %s \
+                    \nT_age used for estimation is %s \
+                    \nRfree used for estimation is %s \
+                    \nCRRA is %s'
+                    % (center_estimate,
+                       spread_estimate,
+                       EstimationEconomy.agents[0].PermGroFac[0],
+                       EstimationEconomy.agents[0].T_age,
+                       EstimationEconomy.agents[0].Rfree,
+                       EstimationEconomy.agents[0].CRRA))
+            
+        # Save EstimationEconomy as .pkl
+        with open('./ParamsEstimates/' + country +'/' + Params.spec_name + '_EstimationEconomy.pkl', 'wb') as f:
+            pickle.dump(EstimationEconomy, f, pickle.HIGHEST_PROTOCOL)
 
 
 
