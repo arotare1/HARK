@@ -34,10 +34,15 @@ world_dist <- read_dta("gpinterized.dta") %>%
 # Load wealth data from Spain
 wealth_spain <- read_csv("wealth-spain.csv") %>%
   filter(p > 0 & p <= 0.99) %>% 
-  mutate(p = as.integer(p*100),
-         sinc = cumsum(sinc)) %>% # transform bracket share into share of bottom x percent
-  rename(botsh = sinc) %>% # rename it like in world_dist
-  select(iso, year, p, botsh)
+  mutate(p = as.integer(p*100)) %>%
+  select(iso, year, p, sinc)
+
+# Transform bracket shares into shares of bottom percentile
+wealth_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(YEAR) {
+  wealth_spain %>% filter(year == YEAR) %>%
+    mutate(sinc = cumsum(sinc)) %>%
+    rename(botsh = sinc)
+  })
 
 # Fill in missing percentiles for Spain
 missing_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(year) {
@@ -48,19 +53,19 @@ missing_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(y
   })
 
 wealth_spain <- bind_rows(wealth_spain, missing_spain) %>%
-  arrange(iso, year, p) %>%
-  mutate(botsh = if_else(p < 10, 0, botsh))
+  arrange(iso, year, p)
 
-wealth_spain %<>% fill(botsh)
+# wealth_spain %<>% mutate(botsh = if_else(p < 10, 0, botsh)) %>% fill(botsh)
 
 # Merge Spain with other countries
 world_dist <- bind_rows(world_dist, wealth_spain)
 
 
-# ----------------------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------------------------- #
 # Write function that takes a country and a year as input and creates a .csv file with the 
-# corresponding wealth shares and the average growth rate from the previous LAG years
-# ----------------------------------------------------------------------------------------- #
+# following structure:
+# percentile | bottom wealth share | growth past 25 yrs (2 cols) | growth future 25 yrs (2 cols)
+# ---------------------------------------------------------------------------------------------- #
 
 # Import real GDP data from the World Bank
 # URL: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
@@ -71,26 +76,42 @@ gdp_raw <- read.csv('../worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
 gdp_growth <- read.csv('../worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
 
 get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
-  # Get average real GDP growth from previous LAG years. Use two measures for consistency
+  # Get average real GDP growth from past and future LAG years. Use two measures for consistency
   if(ISO=="CN") CountryCode <- "CHN"
   if(ISO=="ES") CountryCode <- "ESP"
   if(ISO=="FR") CountryCode <- "FRA"
   if(ISO=="GB") CountryCode <- "GBR"
   if(ISO=="US") CountryCode <- "USA"
-  first <- as.character(YEAR - LAG)
-  first_plus_one <- as.character(YEAR - LAG + 1)
-  last <- as.character(YEAR)
-  gdp_first <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(first, colnames(gdp_raw))]
-  gdp_last <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(last, colnames(gdp_raw))]
-  growth_factor1 <- (gdp_last/gdp_first)^(1/LAG)
-  growth_rates <- as.numeric(gdp_growth[gdp_raw$CountryCode==CountryCode,
-                                        grep(first_plus_one, colnames(gdp_raw)):grep(last, colnames(gdp_raw))])
-  growth_factor2 <- mean(growth_rates)/100 + 1
+  
+  before <- as.character(YEAR - LAG)
+  before_plus_one <- as.character(YEAR - LAG + 1)
+  now <- as.character(YEAR)
+  now_plus_one <- as.character(YEAR + 1)
+  after <- as.character(YEAR + LAG)
+
+  gdp_before <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(before, colnames(gdp_raw))]
+  gdp_now <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(now, colnames(gdp_raw))]
+  gdp_after <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(after, colnames(gdp_raw))]
+  growth_before_1 <- (gdp_now/gdp_before)^(1/LAG)
+  growth_after_1 <- (gdp_after/gdp_now)^(1/LAG)
+  
+  range_before <- grep(before_plus_one, colnames(gdp_growth)) : grep(now, colnames(gdp_growth))
+  range_after <- grep(now_plus_one, colnames(gdp_growth)) : grep(after, colnames(gdp_growth))
+  rates_before <- as.numeric(gdp_growth[gdp_growth$CountryCode==CountryCode, range_before])
+  rates_after <- as.numeric(gdp_growth[gdp_growth$CountryCode==CountryCode, range_after])
+                  
+  growth_before_2 <- mean(rates_before)/100 + 1
+  growth_after_2 <- mean(rates_after)/100 + 1
   
   output <- world_dist %>% filter(iso == ISO & year == YEAR) %>% 
     select(p, botsh) %>%
-    mutate(growth_factor1 = growth_factor1,
-           growth_factor2 = growth_factor2)
+    mutate(growth_before_1 = growth_before_1,
+           growth_before_2 = growth_before_2,
+           growth_after_1 = growth_after_1,
+           growth_after_2 = growth_after_2,
+           before = YEAR - LAG,
+           now = YEAR,
+           after = YEAR + LAG)
   name <- paste(c("../../wealthData_", ISO, "_", as.character(YEAR), ".csv"), collapse = "")
   write_csv(output, name)
 }
