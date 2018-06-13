@@ -1,11 +1,25 @@
 # ================================================================================================ #
-# Makes Lorenz curves from WID.world to be used in quantitative exercise
-# Uses data and code from the methodological appendix of the World Inequality Report 2018 (WIR)
+# Makes Lorenz curves for different countries to be used in quantitative exercise (WID.world)
+# Appends growth rates over the period before and after a reference year (worldbank)
+# Appends aggregate wealth-to-income ratios in reference year (WID.world)
+#
+# Lorenz curves are from the methodological appendix of the World Inequality Report 2018 (WIR)
 # Assumes the files gpinterized.dta and wealth-spain.csv have been downloaded from the appendix
 # Link to WIR: http://wir2018.wid.world/
 # Link to methodological appendix: http://wir2018.wid.world/methodology.html
 # Link to computer codes: http://wid.world/static/computer-codes.zip
-# Countries: ES, FR, US, GB
+# Countries: ES, FR, GB, US
+# 
+# Growth rates are from the worldbank
+# The first measure computes the annualized growth rate of real gdp from start to end period
+# Link: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
+# The second measure averages over annual real gdp growth rates over relevant period
+# Link: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG
+
+# Wealth-to-income ratios are from WID.world
+# Variable code: wwealp_999_i
+# Variable name: Net Private Wealth to Net National Income Ratio
+# Link: http://wid.world/data/
 # ================================================================================================ #
 
 library(plyr)
@@ -26,7 +40,7 @@ setwd('/Users/andreea/Documents/phd/2ndyrpaper/HARK/cstwGrowth/Empirical/wid_wea
 
 # Keep just wealth shares of bottom 1,2,3...,99 percent
 world_dist <- read_dta("gpinterized.dta") %>% 
-  filter(p > 0 & p <= 99000 & iso != "WO") %>%
+  filter(p > 0 & p <= 99000 & iso != "WO" & iso != "CN") %>%
   mutate(year = as.integer(year), p = p/1000) %>%
   select(iso, year, p, botsh) %>%
   arrange(iso, year, p)
@@ -65,27 +79,49 @@ wealth_spain <- bind_rows(wealth_spain, missing_spain) %>%
 world_dist <- bind_rows(world_dist, wealth_spain)
 
 
-# ---------------------------------------------------------------------------------------------- #
-# Write function that takes a country and a year as input and creates a .csv file with the 
+# ----------------------------------------------------------------------------------------------- #
+# Write function that takes country, year, interval as input and creates a .csv file with the 
 # following structure:
-# percentile | bottom wealth share | growth past 25 yrs (2 cols) | growth future 25 yrs (2 cols)
-# ---------------------------------------------------------------------------------------------- #
+# prc | bottom share now | bottom share after | K/Y now | K/Y after | growth before | growth after
+# ----------------------------------------------------------------------------------------------- #
 
 # Import real GDP data from the World Bank
-# URL: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
 gdp_raw <- read.csv('../worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
-
-# Import real GDP growth data from the World Bank
-# URL: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG
 gdp_growth <- read.csv('../worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
+
+# Import wealth-to-income ratio from WID.world
+# Note: assumes years of interest are 1988 and 2013!
+KY_now_ES <- 4.23159027099609
+KY_now_FR <- 3.22252440452576
+KY_now_GB <- 3.71645903587341
+KY_now_US <- 3.64715075492859
+KY_after_ES <- 6.56139802932739
+KY_after_FR <- 5.86394023895264
+KY_after_GB <- 5.63525152206421
+KY_after_US <- 4.6410756111145
 
 get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
   # Get average real GDP growth from past and future LAG years. Use two measures for consistency
-  if(ISO=="CN") CountryCode <- "CHN"
-  if(ISO=="ES") CountryCode <- "ESP"
-  if(ISO=="FR") CountryCode <- "FRA"
-  if(ISO=="GB") CountryCode <- "GBR"
-  if(ISO=="US") CountryCode <- "USA"
+  if(ISO=="ES") {
+    CountryCode <- "ESP"
+    KY_now <- KY_now_ES
+    KY_after <- KY_after_ES
+  }
+  if(ISO=="FR") {
+    CountryCode <- "FRA"
+    KY_now <- KY_now_FR
+    KY_after <- KY_after_FR
+  }
+  if(ISO=="GB") {
+    CountryCode <- "GBR"
+    KY_now <- KY_now_GB
+    KY_after <- KY_after_GB
+  }
+  if(ISO=="US") {
+    CountryCode <- "USA"
+    KY_now <- KY_now_US
+    KY_after <- KY_after_US
+  }
   
   before <- as.character(YEAR - LAG)
   before_plus_one <- as.character(YEAR - LAG + 1)
@@ -118,15 +154,17 @@ get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
     rename(botsh_after = botsh)
   
   output <- inner_join(lorenz_now, lorenz_after) %>%
-    mutate(now = YEAR,
-           before = YEAR-LAG,
-           after = YEAR+LAG,
+    mutate(KY_now = KY_now,
+           KY_after = KY_after,
            growth_before_1 = growth_before_1,
            growth_before_2 = growth_before_2,
            growth_after_1 = growth_after_1,
-           growth_after_2 = growth_after_2)
+           growth_after_2 = growth_after_2,
+           now = YEAR,
+           before = YEAR-LAG,
+           after = YEAR+LAG)
   
-  name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/outputFiles/wealthDataByCountry/wealthData_', 
+  name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/output/countryWealth/wealthData_', 
                   ISO, '_', as.character(YEAR), ".csv"), collapse = '')
   write_csv(output, name)
 }
