@@ -5,7 +5,7 @@
 # Link to WIR: http://wir2018.wid.world/
 # Link to methodological appendix: http://wir2018.wid.world/methodology.html
 # Link to computer codes: http://wid.world/static/computer-codes.zip
-# Countries: CN, ES, FR, US, GB
+# Countries: ES, FR, US, GB
 # ================================================================================================ #
 
 library(plyr)
@@ -32,12 +32,15 @@ world_dist <- read_dta("gpinterized.dta") %>%
   arrange(iso, year, p)
 
 # Load wealth data from Spain
-wealth_spain <- read_csv("wealth-spain.csv") %>%
-  filter(p <= 0.99 & year==1988) %>% 
-  mutate(p = as.integer(lead(p)*100)) %>%
-  select(iso, year, p, sinc)
-wealth_spain <- wealth_spain[complete.cases(wealth_spain), ]
-
+wealth_spain_raw <- read_csv("wealth-spain.csv")
+wealth_spain <- ldply(min(wealth_spain_raw$year):max(wealth_spain_raw$year), function(YEAR) {
+  output <- wealth_spain_raw %>%
+    filter(p <= 0.99 & year==YEAR) %>% 
+    mutate(p = as.integer(lead(p)*100)) %>%
+    select(iso, year, p, sinc)
+  output <- output[complete.cases(output),]
+})
+  
 # Transform bracket shares into shares of bottom percentile
 wealth_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(YEAR) {
   wealth_spain %>% filter(year == YEAR) %>%
@@ -56,7 +59,7 @@ missing_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(y
 wealth_spain <- bind_rows(wealth_spain, missing_spain) %>%
   arrange(iso, year, p)
 
-# wealth_spain %<>% mutate(botsh = if_else(p < 10, 0, botsh)) %>% fill(botsh)
+#wealth_spain %<>% mutate(botsh = if_else(p < 10, 0, botsh)) %>% fill(botsh)
 
 # Merge Spain with other countries
 world_dist <- bind_rows(world_dist, wealth_spain)
@@ -104,20 +107,30 @@ get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
   growth_before_2 <- mean(rates_before)/100 + 1
   growth_after_2 <- mean(rates_after)/100 + 1
   
-  output <- world_dist %>% filter(iso == ISO & year == YEAR) %>% 
+  # Get Lorenz curves from YEAR and YEAR+LAG
+  lorenz_now <- world_dist %>% 
+    filter(iso == ISO & year == YEAR) %>% 
     select(p, botsh) %>%
-    mutate(growth_before_1 = growth_before_1,
+    rename(botsh_now = botsh)
+  lorenz_after <- world_dist %>% 
+    filter(iso == ISO & year == YEAR+LAG) %>% 
+    select(p, botsh) %>%
+    rename(botsh_after = botsh)
+  
+  output <- inner_join(lorenz_now, lorenz_after) %>%
+    mutate(now = YEAR,
+           before = YEAR-LAG,
+           after = YEAR+LAG,
+           growth_before_1 = growth_before_1,
            growth_before_2 = growth_before_2,
            growth_after_1 = growth_after_1,
-           growth_after_2 = growth_after_2,
-           before = YEAR - LAG,
-           now = YEAR,
-           after = YEAR + LAG)
-  name <- paste(c("../../wealthData_", ISO, "_", as.character(YEAR), ".csv"), collapse = "")
+           growth_after_2 = growth_after_2)
+  
+  name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/outputFiles/wealthDataByCountry/wealthData_', 
+                  ISO, '_', as.character(YEAR), ".csv"), collapse = '')
   write_csv(output, name)
 }
 
-get_lorenz_curve(ISO = "CN", YEAR = 1988)
 get_lorenz_curve(ISO = "ES", YEAR = 1988)
 get_lorenz_curve(ISO = "FR", YEAR = 1988)
 get_lorenz_curve(ISO = "GB", YEAR = 1988)
