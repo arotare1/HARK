@@ -4,3 +4,4 @@ wid_summary <- wid_summary[wid_summary$Percentiles!='Macro variable (not applica
 wid_summary <- wid_summary[grep('Wealth', wid_summary$Variable.category),]
 wid_summary <- wid_summary[wid_summary$Short.name.of.variable=='Net personal wealth',]
 wid_summary <- wid_summary[wid_summary$Type.s..of.variable=='Share',]
+
