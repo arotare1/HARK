@@ -33,9 +33,10 @@ world_dist <- read_dta("gpinterized.dta") %>%
 
 # Load wealth data from Spain
 wealth_spain <- read_csv("wealth-spain.csv") %>%
-  filter(p > 0 & p <= 0.99) %>% 
-  mutate(p = as.integer(p*100)) %>%
+  filter(p <= 0.99 & year==1988) %>% 
+  mutate(p = as.integer(lead(p)*100)) %>%
   select(iso, year, p, sinc)
+wealth_spain <- wealth_spain[complete.cases(wealth_spain), ]
 
 # Transform bracket shares into shares of bottom percentile
 wealth_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(YEAR) {
