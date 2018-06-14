@@ -12,6 +12,7 @@ import numpy as np
 from time import clock
 import matplotlib.pyplot as plt
 import pickle
+from copy import copy, deepcopy
 import pandas as pd
 from scipy.optimize import golden, brentq
 import SetupParams as Params
