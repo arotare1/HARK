@@ -22,9 +22,10 @@ from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
 Params.do_param_dist = False     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
-do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
+do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
 do_more_targets = False   # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
-do_baseline = not do_actual_KY and not do_more_targets
+do_low_T_age = True
+do_baseline = not do_actual_KY and not do_more_targets and not do_low_T_age
 
 
 # Update spec_name
@@ -35,6 +36,8 @@ if do_actual_KY:
 if do_more_targets:
     Params.spec_name = '/more_targets/'
     Params.percentiles_to_match = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+if do_low_T_age:
+    Params.spec_name = '/low_T_age/'
     
 Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
@@ -46,7 +49,7 @@ else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
 country_list = ['ES', 'FR', 'GB', 'US']
-#country_list = ['ES']
+#country_list = ['FR']
 
 for country in country_list:
     print('Now finding estimates for ' + country + '\n')
@@ -88,6 +91,8 @@ for country in country_list:
         else:
             PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
             PerpetualYouthType.PermGroFac = [estimation_growth]     # Update growth factor
+            if do_low_T_age:
+                PerpetualYouthType.T_age = 200      # Update T_age
         PerpetualYouthType.AgeDstn = np.array(1.0)
         EstimationAgentList = []
         for n in range(Params.pref_type_count):
