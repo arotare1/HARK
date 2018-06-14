@@ -317,8 +317,8 @@ class cstwMPCmarket(EstimationMarketClass):
             Difference between simulated and target capital to income ratio.
         '''
         # Ignore the first X periods to allow economy to stabilize from initial conditions
-        KYratioSim = np.mean(np.array(self.KtoYnow_hist)[self.ignore_periods:])
-        diff = KYratioSim - self.KYratioTarget
+        self.KYratioSim = np.mean(np.array(self.KtoYnow_hist)[self.ignore_periods:])
+        diff = self.KYratioSim - self.KYratioTarget
         return diff
         
     def calcLorenzDistance(self):
