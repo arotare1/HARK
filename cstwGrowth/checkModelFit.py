@@ -1,168 +1,132 @@
 '''
-Load various estimates and see how well the model fits the empirical Lorenz curve
+Takes parameters estimated by ./FindEstimatesByCountry.py and solves model for the growth rate
+observed over the following 25 years. Then it compares the resulting wealth distribution to the
+realized wealth distribution.
+
+Assumes parameter estimates for each country exist in ../../output/countryEstimates/
+
+Saves results in ../../output/modelFit
 '''
 
 import pdb
 import numpy as np
-import matplotlib.pyplot as plt
-import pickle
-import pandas as pd
-import SetupParams as Params
-from copy import copy, deepcopy
 from time import clock
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
-from HARKutilities import approxMeanOneLognormal, approxUniform, getPercentiles, getLorenzShares
-
+import pickle
+from copy import copy, deepcopy
+import pandas as pd
+from scipy.optimize import golden, brentq
+import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference, getLorenzShares, getGini
-
-LorenzAxis = np.arange(101,dtype=float)
-
-Params.do_param_dist = True    # Do param-dist version if True, param-point if False
+                        
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
+do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
+do_more_targets = False   # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
+do_baseline = not do_actual_KY and not do_more_targets
+
+
 # Update spec_name
-Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
+if do_baseline:
+    Params.spec_name = '/baseline/'
+if do_actual_KY:
+    Params.spec_name = '/actual_KY/'
+if do_more_targets:
+    Params.spec_name = '/more_targets/'
+    
+Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 
-# Choose country
-country = ''
-# Load previously computed estimates
-with open('./ParamsEstimates_from_thinkpad/' + country + '/' + Params.spec_name + '.pkl') as f:
-    center_estimate, \
-    spread_estimate, \
-    estimation_growth, \
-    estimation_T_age, \
-    estimation_Rfree, \
-    estimation_CRRA = pickle.load(f)
-    
-# Set number of beta types
-if Params.do_param_dist:
-    Params.pref_type_count = 7       # Number of discrete beta types in beta-dist
-else:
-    Params.pref_type_count = 1       # Just one beta type in beta-point
-    
-path_to_lorenz = 'wealthData_' + country + '_1988.csv'
-lorenz_long_data = pd.read_csv(path_to_lorenz)['botsh'].values
-lorenz_long_data = np.hstack((np.array(0.0), pd.read_csv(path_to_lorenz)['botsh'].values, np.array(1.0)))
-lorenz_target = lorenz_long_data[np.array([int(100*p) for p in Params.percentiles_to_match])]
-KY_target = 10.26
+country_list = ['ES', 'FR', 'GB', 'US']
+#country_list = ['US']
 
-# Make AgentTypes
-if Params.do_lifecycle:
-    DropoutType = cstwMPCagent(**Params.init_dropout)
-    DropoutType.PermGroFac = [estimation_growth]    # Update growth factor
-    DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
-    HighschoolType = deepcopy(DropoutType)
-    HighschoolType(**Params.adj_highschool)
-    HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
-    CollegeType = deepcopy(DropoutType)
-    CollegeType(**Params.adj_college)
-    CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
-    DropoutType.update()
-    HighschoolType.update()
-    CollegeType.update()
-    AgentList = []
-    for n in range(Params.pref_type_count):
-        AgentList.append(deepcopy(DropoutType))
-        AgentList.append(deepcopy(HighschoolType))
-        AgentList.append(deepcopy(CollegeType))
-else:
-    if Params.do_agg_shocks:
-        PerpetualYouthType = cstwMPCagent(**Params.init_agg_shocks)
-        PerpetualYouthType.PermGroFac = [estimation_growth]     # Update growth factor
+for country in country_list:      
+    print('Now solving economy of ' + country + '\n')       
+          
+    # Load correpsonding economy from ../../output/countryEstimates/
+    with open('../../output/countryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
+        EconomyNow = pickle.load(f)
+    
+    # Load growth rate observed from 1988 to 2013
+    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '_1988.csv'
+    growth_after = pd.read_csv(path_to_lorenz)['growth_after_1'].values[0]**0.25
+    
+    # Create new economy
+    EconomyAfter  = deepcopy(EconomyNow)
+    
+    # Update Lorenz data of new economy
+    lorenz_long_after = pd.read_csv(path_to_lorenz)['botsh_after'].values
+    lorenz_long_after = np.hstack((np.array(0.0), lorenz_long_after, np.array(1.0)))
+    lorenz_target_after = lorenz_long_after[np.array([int(100*p) for p in EconomyAfter.LorenzPercentiles])]
+    if do_actual_KY:
+        KY_after = pd.read_csv(path_to_lorenz)['KY_after'].values[0]
+        EconomyAfter.KYratioTarget = KY_after
+    EconomyAfter.LorenzData = lorenz_long_after
+    EconomyAfter.LorenzTarget = lorenz_target_after
+    
+    # Solve new economy for growth rate observed between 1988 and 2013
+    for j in range(len(EconomyAfter.agents)):
+        EconomyAfter.agents[j].PermGroFac = [growth_after]
+    EconomyAfter.solve()
+    EconomyAfter.calcLorenzDistance()
+    EconomyAfter.calcKYratioDifference()
+    EconomyAfter.showManyStats()
+    
+    # Make figure of Lorenz fit
+    LorenzAxis = np.arange(101,dtype=float)
+    if country == 'ES':     # Must deal with missing values
+        fig = plt.figure()
+        plt.plot(LorenzAxis, EconomyAfter.LorenzData.astype(np.double), '.r', linewidth=1.5, label = '2013 data')
+        plt.plot(LorenzAxis, EconomyAfter.LorenzLongLvlSim, '--r', label = '2013 model')
+        plt.plot(LorenzAxis, EconomyNow.LorenzData.astype(np.double), '.k', linewidth=1.5, label = '1988 data')
+        plt.plot(LorenzAxis, EconomyNow.LorenzLongLvlSim, '--k', label = '1988 model')
+        plt.xlabel('Wealth percentile',fontsize=12)
+        plt.ylabel('Cumulative wealth share',fontsize=12)
+        plt.title(country + ' wealth distribution 1988 to 2013')
+        plt.ylim([-0.03,1.0])
+        plt.legend(loc='upper left')
+        plt.show()
+        fig.savefig('../../output/modelFit/' + country + Params.spec_name + '.pdf')
     else:
-        PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
-        PerpetualYouthType.PermGroFac = [estimation_growth]     # Update growth factor
-    PerpetualYouthType.AgeDstn = np.array(1.0)
-    AgentList = []
-    for n in range(Params.pref_type_count):
-        AgentList.append(deepcopy(PerpetualYouthType))
+        fig = plt.figure()
+        plt.plot(LorenzAxis, EconomyAfter.LorenzData, '-r', linewidth=1.5, label = '2013 data')
+        plt.plot(LorenzAxis, EconomyAfter.LorenzLongLvlSim, '--r', label = '2013 model')
+        plt.plot(LorenzAxis, EconomyNow.LorenzData, '-k', linewidth=1.5, label = '1988 data')
+        plt.plot(LorenzAxis, EconomyNow.LorenzLongLvlSim, '--k', label = '1988 model')
+        plt.xlabel('Wealth percentile',fontsize=12)
+        plt.ylabel('Cumulative wealth share',fontsize=12)
+        plt.title(country + ' wealth distribution 1988 to 2013')
+        plt.ylim([-0.03,1.0])
+        plt.legend(loc='upper left')
+        plt.show()
+        fig.savefig('../../output/modelFit/' + country + Params.spec_name + '.pdf')
         
-# Give all the AgentTypes different seeds
-for j in range(len(AgentList)):
-    AgentList[j].seed = j
+    # Save Lorenz and KY ratio distance
+    with open('../../output/modelFit/' + country + Params.spec_name + '.txt','w') as f:
+        f.write('center_estimate = %s \
+                \nspread_estimate = %s \
+                \ngrowth factor for new economy is %s \
+                \nT_age used in simulation is %s \
+                \nRfree used in simulation is %s \
+                \nCRRA used fin simulation is %s \
+                \nK/Y ratio for new economy is %s \
+                \nLorenz distance is %s \
+                \nKY ratio difference is %s'
+                % (EconomyAfter.center_estimate,
+                   EconomyAfter.spread_estimate,
+                   EconomyAfter.agents[0].PermGroFac[0],
+                   EconomyAfter.agents[0].T_age,
+                   EconomyAfter.agents[0].Rfree,
+                   EconomyAfter.agents[0].CRRA,
+                   EconomyAfter.KYratioTarget,
+                   EconomyAfter.LorenzDistance,
+                   EconomyAfter.KYratioDiff))
     
-# Make an economy for the consumers to live in
-Economy = cstwMPCmarket(**Params.init_market)
-if Params.do_param_dist:    # Update simulation parameters
-    if Params.do_agg_shocks:
-        Economy.Population = 16800
-    else:
-        Economy.Population = 14000
-else:
-    if Params.do_agg_shocks:
-        Economy.Population = 9600
-    else:
-        Economy.Population = 10000    # Total number of simulated agents in the population
-Economy.agents = AgentList
-Economy.KYratioTarget = KY_target
-Economy.LorenzTarget = lorenz_target
-Economy.LorenzData = lorenz_long_data
-if Params.do_lifecycle:
-    Economy.PopGroFac = Params.PopGroFac
-    Economy.TypeWeight = Params.TypeWeight_lifecycle
-    Economy.T_retire = Params.working_T-1
-    Economy.act_T = Params.T_sim_LC
-    Economy.ignore_periods = Params.ignore_periods_LC
-else:
-    Economy.PopGroFac = 1.0
-    Economy.TypeWeight = [1.0]
-    Economy.act_T = Params.T_sim_PY
-    Economy.ignore_periods = Params.ignore_periods_PY
-if Params.do_agg_shocks:
-    Economy(**Params.aggregate_params)
-    Economy.update()
-    Economy.makeAggShkHist()
-
-# Solve the model
-Economy.LorenzBool = True
-Economy.ManyStatsBool = True
-Economy.center_estimate = center_estimate
-Economy.spread_estimate = spread_estimate
-Economy.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,
-                         spread_estimate,Params.dist_type)
-Economy.solve()
-Economy.calcLorenzDistance()
-Economy.showManyStats(Params.spec_name)
-
-# Plot Lorenz curve fit
-fig = plt.figure()
-plt.plot(LorenzAxis, lorenz_long_data, '-k', linewidth=1.5, label = country + ' data')
-plt.plot(LorenzAxis, Economy.LorenzLongLvlSim, '--', label = 'model')
-plt.xlabel('Wealth percentile',fontsize=12)
-plt.ylabel('Cumulative wealth share',fontsize=12)
-plt.title(country)
-plt.ylim([-0.02,1.0])
-plt.legend(loc='upper left')
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Save EconomyAfter
+    with open('../../output/modelFit/' + country + Params.spec_name + '_EconomyAfter.pkl', 'wb') as f:
+            pickle.dump(EconomyAfter, f, pickle.HIGHEST_PROTOCOL)
 
 
 
