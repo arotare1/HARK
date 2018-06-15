@@ -19,14 +19,14 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
                         
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
-Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+Params.do_lifecycle = True     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = False      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
-do_high_CRRA = True     # Set CRRA coefficient to be 1.25 instead of 1 if True
+do_high_CRRA = False     # Set CRRA coefficient to be 1.25 instead of 1 if True
 do_baseline = not do_actual_KY and not do_more_targets and not do_low_T_age \
                 and not do_high_Rfree and not do_high_CRRA
 
@@ -57,8 +57,8 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
-country_list = ['ES', 'FR', 'GB', 'US']
-#country_list = ['FR']
+#country_list = ['ES', 'FR', 'GB', 'US']
+country_list = ['US']
 
 for country in country_list:
     print('Now finding estimates for ' + country + '\n')
@@ -77,13 +77,16 @@ for country in country_list:
     # Make AgentTypes for estimation
     if Params.do_lifecycle:
         DropoutType = cstwMPCagent(**Params.init_dropout)
-        DropoutType.PermGroFac = [estimation_growth]    # Update growth factor
+        DropoutType.PermGroFac = [estimation_growth] * Params.T_cycle  # Give everyone the same growth factor throughout their lives
+        DropoutType.PermGroFacAgg = 1.0      # Turn off technological growth
         DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
         HighschoolType = deepcopy(DropoutType)
         HighschoolType(**Params.adj_highschool)
+        HighschoolType.PermGroFac = [estimation_growth] * Params.T_cycle
         HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
         CollegeType = deepcopy(DropoutType)
         CollegeType(**Params.adj_college)
+        CollegeType.PermGroFac = [estimation_growth] * Params.T_cycle
         CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
         DropoutType.update()
         HighschoolType.update()
@@ -114,7 +117,8 @@ for country in country_list:
     # Give all the AgentTypes different seeds
     for j in range(len(EstimationAgentList)):
         EstimationAgentList[j].seed = j
-        
+    #pdb.set_trace()    
+    
     # Make an economy for the consumers to live in
     EstimationEconomy = cstwMPCmarket(**Params.init_market)
     EstimationEconomy.LorenzPercentiles = Params.percentiles_to_match # Update percentiles to match
