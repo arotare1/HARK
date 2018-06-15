@@ -21,10 +21,10 @@ from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference, getLorenzShares, getGini
                         
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
+Params.do_lifecycle = True     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
-do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
+do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = False      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
 do_high_CRRA = False     # Set CRRA coefficient to be 1.25 instead of 1 if True
@@ -52,18 +52,106 @@ if do_high_CRRA:
 Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
 
+# Set number of beta types
+if Params.do_param_dist:
+    Params.pref_type_count = 7       # Number of discrete beta types in beta-dist
+else:
+    Params.pref_type_count = 1       # Just one beta type in beta-point
+
 #country_list = ['ES', 'FR', 'GB', 'US']
-country_list = ['ES']
+country_list = ['US']
 
 for country in country_list:      
     print('Now solving economy of ' + country + '\n')       
-          
-    # Load correpsonding economy from ../../output/countryEstimates/
-    with open('../../output/countryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
-        EconomyNow = pickle.load(f)
+    
+    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '_1988.csv'
+    
+    if Params.do_lifecycle:    # Since we don't have estimates for LC, use the ones for PY to create EconomyNow
+        # Load growth rate observed from 1963 to 1988
+        growth_before = pd.read_csv(path_to_lorenz)['growth_before_1'].values[0]**0.25
+        
+        # Make AgentTypes for estimation
+        DropoutType = cstwMPCagent(**Params.init_dropout)
+        DropoutType.PermGroFac = [growth_before] * Params.T_cycle  # Give everyone the same growth factor throughout their lives
+        DropoutType.PermGroFacAgg = 1.0      # Turn off technological growth
+        DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
+        HighschoolType = deepcopy(DropoutType)
+        HighschoolType(**Params.adj_highschool)
+        HighschoolType.PermGroFac = [growth_before] * Params.T_cycle
+        HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
+        CollegeType = deepcopy(DropoutType)
+        CollegeType(**Params.adj_college)
+        CollegeType.PermGroFac = [growth_before] * Params.T_cycle
+        CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
+        DropoutType.update()
+        HighschoolType.update()
+        CollegeType.update()
+        AgentList = []
+        for n in range(Params.pref_type_count):
+            AgentList.append(deepcopy(DropoutType))
+            AgentList.append(deepcopy(HighschoolType))
+            AgentList.append(deepcopy(CollegeType))
+        
+        # Give all the AgentTypes different seeds
+        for j in range(len(AgentList)):
+            AgentList[j].seed = j
+            
+        # Make an economy for the consumers to live in
+        EconomyNow = cstwMPCmarket(**Params.init_market)
+        EconomyNow.LorenzPercentiles = Params.percentiles_to_match # Update percentiles to match
+        if Params.do_param_dist:    # Update simulation parameters
+            if Params.do_agg_shocks:
+                EconomyNow.Population = 16800
+            else:
+                EconomyNow.Population = 14000
+        else:
+            if Params.do_agg_shocks:
+                EconomyNow.Population = 9600
+            else:
+                EconomyNow.Population = 10000    # Total number of simulated agents in the population
+        EconomyNow.agents = AgentList
+        
+        # Set KY target
+        KY_now = pd.read_csv(path_to_lorenz)['KY_now'].values[0]
+        EconomyNow.KYratioTarget = KY_now if do_actual_KY else 10.26
+        
+        # Set Lorenz target and data
+        lorenz_long_now = pd.read_csv(path_to_lorenz)['botsh_now'].values
+        lorenz_long_now = np.hstack((np.array(0.0), lorenz_long_now, np.array(1.0)))
+        lorenz_target_now = lorenz_long_now[np.array([int(100*p) for p in EconomyNow.LorenzPercentiles])]
+        EconomyNow.LorenzTarget = lorenz_target_now
+        EconomyNow.LorenzData = lorenz_long_now
+        
+        # Set macro parameters
+        EconomyNow.PopGroFac = Params.PopGroFac
+        EconomyNow.TypeWeight = Params.TypeWeight_lifecycle
+        EconomyNow.T_retire = Params.working_T-1
+        EconomyNow.act_T = Params.T_sim_LC
+        EconomyNow.ignore_periods = Params.ignore_periods_LC
+        
+        # Solve the economy for the PY parameters
+        path_to_estimates = '../../output/countryEstimates/' + country + Params.spec_name + '.pkl'
+        head, replace, tail = path_to_estimates.rpartition('LC')
+        path_to_estimates = head + 'PY' + tail
+        with open(path_to_estimates, 'r') as f:
+            center_estimate, spread_estimate = pickle.load(f)
+        pdb.set_trace()
+        EconomyNow.LorenzBool = True
+        EconomyNow.ManyStatsBool = True
+        EconomyNow.center_estimate = center_estimate
+        EconomyNow.spread_estimate = spread_estimate
+        EconomyNow.distributeParams(Params.param_name,Params.pref_type_count,center_estimate,
+                                           spread_estimate,Params.dist_type)
+        EconomyNow.solve()
+        EconomyNow.calcLorenzDistance()
+        EconomyNow.showManyStats()
+        
+    else: # If we're in the PY case load the already existing economy
+        # Load correpsonding economy from ../../output/countryEstimates/
+        with open('../../output/countryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
+            EconomyNow = pickle.load(f)
     
     # Load growth rate observed from 1988 to 2013
-    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '_1988.csv'
     growth_after = pd.read_csv(path_to_lorenz)['growth_after_1'].values[0]**0.25
     
     # Create new economy
@@ -81,7 +169,10 @@ for country in country_list:
     
     # Solve new economy for growth rate observed between 1988 and 2013
     for j in range(len(EconomyAfter.agents)):
-        EconomyAfter.agents[j].PermGroFac = [growth_after]
+        if Params.do_lifecycle:
+            EconomyAfter.agents[j].PermGroFac = [growth_after] * Params.T_cycle
+        else:
+            EconomyAfter.agents[j].PermGroFac = [growth_after]
     EconomyAfter.solve()
     EconomyAfter.calcLorenzDistance()
     EconomyAfter.calcKYratioDifference()

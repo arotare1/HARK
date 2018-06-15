@@ -152,7 +152,6 @@ for country in country_list:
         EstimationEconomy.update()
         EstimationEconomy.makeAggShkHist()
         
-    #pdb.set_trace()
     # Find estimates of center and spread
         
     # Choose the bounding region for the parameter search
