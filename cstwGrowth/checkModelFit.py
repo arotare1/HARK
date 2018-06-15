@@ -35,15 +35,23 @@ do_baseline = not do_actual_KY and not do_more_targets and not do_low_T_age \
 # Update spec_name
 if do_baseline:
     Params.spec_name = '/baseline/'
+
 if do_more_targets:
-    Params.spec_name = '/more_targets/'
     Params.percentiles_to_match = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-if do_actual_KY and not do_low_T_age:
-    Params.spec_name = '/actual_KY/'
-if do_low_T_age and not do_actual_KY:
-    Params.spec_name = '/low_T_age/'
-if do_low_T_age and do_actual_KY:
-    Params.spec_name = '/low_T_age_actual_KY/'
+    if do_actual_KY and not do_low_T_age:
+        Params.spec_name = '/more_targets/actual_KY/'
+    if do_low_T_age and not do_actual_KY:
+        Params.spec_name = '/more_targets/low_T_age/'
+    if do_low_T_age and do_actual_KY:
+        Params.spec_name = '/more_targets/low_T_age_actual_KY/'
+else:
+    if do_actual_KY and not do_low_T_age:
+        Params.spec_name = '/actual_KY/'
+    if do_low_T_age and not do_actual_KY:
+        Params.spec_name = '/low_T_age/'
+    if do_low_T_age and do_actual_KY:
+        Params.spec_name = '/low_T_age_actual_KY/'
+    
 if do_high_Rfree:
     Params.spec_name = '/high_Rfree/'
 if do_high_CRRA:
