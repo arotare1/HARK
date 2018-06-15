@@ -544,3 +544,10 @@ def getGini(data,weights=None,presorted=False):
     Gini = np.sum((2*index-n-1)*wealth_sorted)/(n*np.sum(wealth_sorted))
     return Gini
 
+def getGiniPrc(lorenz_percentiles):
+    '''
+    Computes the Gini coefficient given equally spaced Lorenz percentiles
+    '''
+    n = len(lorenz_percentiles-1)
+    return 1 - (1 + 2*sum(lorenz_percentiles[:-1]))/n
+
