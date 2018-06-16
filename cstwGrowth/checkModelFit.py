@@ -43,19 +43,24 @@ if do_more_targets:
     if do_low_T_age and not do_actual_KY:
         Params.spec_name = '/more_targets/low_T_age/'
     if do_low_T_age and do_actual_KY:
-        Params.spec_name = '/more_targets/low_T_age_actual_KY/'
+        if do_high_CRRA:
+            Params.spec_name = '/more_targets/low_T_age_actual_KY_high_CRRA/'
+        else:
+            Params.spec_name = '/more_targets/low_T_age_actual_KY/'
+    
 else:
     if do_actual_KY and not do_low_T_age:
         Params.spec_name = '/actual_KY/'
     if do_low_T_age and not do_actual_KY:
         Params.spec_name = '/low_T_age/'
     if do_low_T_age and do_actual_KY:
-        Params.spec_name = '/low_T_age_actual_KY/'
+        if do_high_CRRA:
+            Params.spec_name = '/low_T_age_actual_KY_high_CRRA/'
+        else:
+            Params.spec_name = '/low_T_age_actual_KY/'
     
 if do_high_Rfree:
     Params.spec_name = '/high_Rfree/'
-if do_high_CRRA:
-    Params.spec_name = '/high_CRRA/'
     
 Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
