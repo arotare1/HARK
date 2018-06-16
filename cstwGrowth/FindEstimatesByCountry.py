@@ -19,7 +19,7 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
                         
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
@@ -121,7 +121,7 @@ for country in country_list:
             if do_high_Rfree:
                 PerpetualYouthType.Rfree = 1.02/Params.LivPrb_i[0] # Update Rfree
             if do_high_CRRA:
-                PerpetualYouthType.CRRA = 1.25
+                PerpetualYouthType.CRRA = 1.5
         PerpetualYouthType.AgeDstn = np.array(1.0)
         EstimationAgentList = []
         for n in range(Params.pref_type_count):
@@ -191,6 +191,7 @@ for country in country_list:
                                        center = 0.999,
                                        spread = 0.006,
                                        dist_type = Params.dist_type)
+    #pdb.set_trace()
     if x*y > 0:
         print('Estimation failed for ' + country + '\n')
     else:
