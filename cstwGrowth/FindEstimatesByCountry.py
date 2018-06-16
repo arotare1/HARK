@@ -65,8 +65,8 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
-#country_list = ['ES', 'FR', 'GB', 'US']
-country_list = ['US']
+country_list = ['ES', 'FR', 'GB', 'US']
+#country_list = ['US']
 
 for country in country_list:
     print('Now finding estimates for ' + country + '\n')
@@ -85,16 +85,16 @@ for country in country_list:
     # Make AgentTypes for estimation
     if Params.do_lifecycle:
         DropoutType = cstwMPCagent(**Params.init_dropout)
-        DropoutType.PermGroFac = [estimation_growth] * Params.T_cycle  # Give everyone the same growth factor throughout their lives
+        DropoutType.PermGroFac = [estimation_growth*g for g in DropoutType.PermGroFac]
         DropoutType.PermGroFacAgg = 1.0      # Turn off technological growth
         DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
         HighschoolType = deepcopy(DropoutType)
         HighschoolType(**Params.adj_highschool)
-        HighschoolType.PermGroFac = [estimation_growth] * Params.T_cycle
+        HighschoolType.PermGroFac = [estimation_growth*g for g in HighschoolType.PermGroFac]
         HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
         CollegeType = deepcopy(DropoutType)
         CollegeType(**Params.adj_college)
-        CollegeType.PermGroFac = [estimation_growth] * Params.T_cycle
+        CollegeType.PermGroFac = [estimation_growth*g for g in CollegeType.PermGroFac]
         CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
         DropoutType.update()
         HighschoolType.update()

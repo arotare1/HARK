@@ -20,8 +20,8 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference, getLorenzShares, getGini
                         
-Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-Params.do_lifecycle = True     # Use lifecycle model if True, perpetual youth if False
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
@@ -80,16 +80,16 @@ for country in country_list:
         
         # Make AgentTypes for estimation
         DropoutType = cstwMPCagent(**Params.init_dropout)
-        DropoutType.PermGroFac = [growth_before] * Params.T_cycle  # Give everyone the same growth factor throughout their lives
+        DropoutType.PermGroFac = [growth_before*g for g in DropoutType.PermGroFac]
         DropoutType.PermGroFacAgg = 1.0      # Turn off technological growth
         DropoutType.AgeDstn = calcStationaryAgeDstn(DropoutType.LivPrb,True)
         HighschoolType = deepcopy(DropoutType)
         HighschoolType(**Params.adj_highschool)
-        HighschoolType.PermGroFac = [growth_before] * Params.T_cycle
+        HighschoolType.PermGroFac = [growth_before*g for g in HighschoolType.PermGroFac]
         HighschoolType.AgeDstn = calcStationaryAgeDstn(HighschoolType.LivPrb,True)
         CollegeType = deepcopy(DropoutType)
         CollegeType(**Params.adj_college)
-        CollegeType.PermGroFac = [growth_before] * Params.T_cycle
+        CollegeType.PermGroFac = [growth_before*g for g in CollegeType.PermGroFac]
         CollegeType.AgeDstn = calcStationaryAgeDstn(CollegeType.LivPrb,True)
         DropoutType.update()
         HighschoolType.update()
@@ -158,12 +158,15 @@ for country in country_list:
         # Load correpsonding economy from ../../output/countryEstimates/
         with open('../../output/countryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
             EconomyNow = pickle.load(f)
-    
+    pdb.set_trace()
     # Load growth rate observed from 1988 to 2013
     growth_after = pd.read_csv(path_to_lorenz)['growth_after_1'].values[0]**0.25
     
     # Create new economy
     EconomyAfter  = deepcopy(EconomyNow)
+    if Params.do_lifecycle:
+        for j in range(len(EconomyAfter.agents)):
+            EconomyAfter.agents[j].PermGroFac = [growth_after/growth_before * g for g in EconomyAfter.agents[j].PermGroFac]
     
     # Update Lorenz data of new economy
     lorenz_long_after = pd.read_csv(path_to_lorenz)['botsh_after'].values
