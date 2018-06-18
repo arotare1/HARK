@@ -70,8 +70,8 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
-country_list = ['ES', 'FR', 'GB', 'US']
-#country_list = ['US']
+#country_list = ['ES', 'FR', 'GB', 'US']
+country_list = ['ES']
 
 for country in country_list:
     print('Now finding estimates for ' + country + '\n')
