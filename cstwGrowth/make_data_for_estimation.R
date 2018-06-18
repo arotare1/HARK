@@ -10,7 +10,7 @@
 # Link to computer codes: http://wid.world/static/computer-codes.zip
 # Countries: ES, FR, GB, US
 # 
-# Growth rates are from the worldbank
+# Growth rates are from the World Bank
 # The first measure computes the annualized growth rate of real gdp from start to end period
 # Link: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
 # The second measure averages over annual real gdp growth rates over relevant period
@@ -91,11 +91,11 @@ gdp_growth <- read.csv('../worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.
 
 # Import wealth-to-income ratio from WID.world
 # Note: assumes years of interest are 1988 and 2013!
-KY_now_ES <- 4.23159027099609
+KY_now_ES <- 4.23159027099609   # 1988
 KY_now_FR <- 3.22252440452576
 KY_now_GB <- 3.71645903587341
 KY_now_US <- 3.64715075492859
-KY_after_ES <- 6.56139802932739
+KY_after_ES <- 6.56139802932739 # 2013
 KY_after_FR <- 5.86394023895264
 KY_after_GB <- 5.63525152206421
 KY_after_US <- 4.6410756111145
