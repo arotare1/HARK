@@ -35,9 +35,12 @@
 # Link: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG
 #
 # The resulting dataset has the following columns:
-# "iso"             "year"            "top1_share"      "top5_share"      "top10_share"    
-# "bot60_share"     "mean_to_median"  "top20_to_bot20"  "mid40_share"     "top5_to_median" 
-# "bot20_to_median" "gini"            "source"  
+# "country"         "iso"             "year"            "mean"            "median"         
+# "mean_to_median"  "top1_share"      "top1_to_median"  "top5_share"      "top5_to_median" 
+# "top10_share"     "top10_to_median" "bot20_share"     "bot20_to_median" "bot60_share"    
+# "top20_to_bot20"  "mid60_share"     "gini"            "source"          "gdp_now"        
+# "gdp_last25"      "gdp_growth"
+# ================================================================================================ #
 
 library(plyr)
 library(tidyverse)
@@ -262,7 +265,7 @@ wealth_inequality <- bind_rows(wealth_inequality, oecd_inequality)
 # Import OECD data from 2015 report "In it Together"
 # --------------------------------------------------- #
 
-oecd_report <- read_excel("./oecd/oecd_wealth/oecd2015_table6.3.xls",
+oecd_report <- read_excel("./oecd_wealth/oecd2015_table6.3.xls",
                           sheet="Tab 6.3 EN", range="A10:K28")
 
 # Construct ratio of top quintile to bottom quintile
