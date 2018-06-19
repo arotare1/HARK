@@ -20,14 +20,14 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference, getLorenzShares, getGini
                         
-Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
-do_high_CRRA = True     # Set CRRA coefficient to be 1.25 instead of 1 if True
+do_high_CRRA = False     # Set CRRA coefficient to be 1.25 instead of 1 if True
 do_baseline = not do_actual_KY and not do_more_targets and not do_low_T_age \
                 and not do_high_Rfree and not do_high_CRRA
 
@@ -77,11 +77,11 @@ country_list = ['ES', 'FR', 'GB', 'US']
 for country in country_list:      
     print('Now solving economy of ' + country + '\n')       
     
-    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '_1988.csv'
+    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '.csv'
     
     if Params.do_lifecycle:    # Since we don't have estimates for LC, use the ones for PY to create EconomyNow
         # Load growth rate observed from 1963 to 1988
-        growth_before = pd.read_csv(path_to_lorenz)['growth_before_1'].values[0]**0.25
+        growth_before = pd.read_csv(path_to_lorenz)['growth_before_penn'].values[0]**0.25
         
         # Make AgentTypes for estimation
         DropoutType = cstwMPCagent(**Params.init_dropout)
@@ -143,7 +143,7 @@ for country in country_list:
         EconomyNow.ignore_periods = Params.ignore_periods_LC
         
         # Solve the economy for the PY parameters
-        path_to_estimates = '../../output/countryEstimates/' + country + Params.spec_name + '.pkl'
+        path_to_estimates = '../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '.pkl'
         head, replace, tail = path_to_estimates.rpartition('LC')
         path_to_estimates = head + 'PY' + tail
         with open(path_to_estimates, 'r') as f:
@@ -161,11 +161,11 @@ for country in country_list:
         
     else: # If we're in the PY case load the already existing economy
         # Load correpsonding economy from ../../output/countryEstimates/
-        with open('../../output/countryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
+        with open('../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
             EconomyNow = pickle.load(f)
     #pdb.set_trace()
     # Load growth rate observed from 1988 to 2013
-    growth_after = pd.read_csv(path_to_lorenz)['growth_after_1'].values[0]**0.25
+    growth_after = pd.read_csv(path_to_lorenz)['growth_after_penn'].values[0]**0.25
     
     # Create new economy
     EconomyAfter  = deepcopy(EconomyNow)
@@ -208,7 +208,7 @@ for country in country_list:
         plt.ylim([-0.03,1.0])
         plt.legend(loc='upper left')
         plt.show()
-        fig.savefig('../../output/modelFit/' + country + Params.spec_name + '.pdf')
+        fig.savefig('../../output/modelFit_longer_horizon/' + country + Params.spec_name + '.pdf')
     else:
         fig = plt.figure()
         plt.plot(LorenzAxis, EconomyAfter.LorenzData, '-r', linewidth=1.5, label = '2013 data')
@@ -221,10 +221,10 @@ for country in country_list:
         plt.ylim([-0.03,1.0])
         plt.legend(loc='upper left')
         plt.show()
-        fig.savefig('../../output/modelFit/' + country + Params.spec_name + '.pdf')
+        fig.savefig('../../output/modelFit_longer_horizon/' + country + Params.spec_name + '.pdf')
         
     # Save Lorenz and KY ratio distance
-    with open('../../output/modelFit/' + country + Params.spec_name + '.txt','w') as f:
+    with open('../../output/modelFit_longer_horizon/' + country + Params.spec_name + '.txt','w') as f:
         f.write('center_estimate = %s \
                 \nspread_estimate = %s \
                 \ngrowth factor for new economy is %s \
@@ -245,7 +245,7 @@ for country in country_list:
                    EconomyAfter.KYratioDiff))
     
     # Save EconomyAfter
-    with open('../../output/modelFit/' + country + Params.spec_name + '_EconomyAfter.pkl', 'wb') as f:
+    with open('../../output/modelFit_longer_horizon/' + country + Params.spec_name + '_EconomyAfter.pkl', 'wb') as f:
             pickle.dump(EconomyAfter, f, pickle.HIGHEST_PROTOCOL)
 
 

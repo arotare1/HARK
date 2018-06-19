@@ -19,14 +19,14 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
                         
-Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
-do_high_CRRA = True     # Set CRRA coefficient to be 1.25 instead of 1 if True
+do_high_CRRA = False     # Set CRRA coefficient to be 1.25 instead of 1 if True
 do_baseline = not do_actual_KY and not do_more_targets and not do_low_T_age \
                 and not do_high_Rfree and not do_high_CRRA
 
@@ -70,14 +70,14 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
-#country_list = ['ES', 'FR', 'GB', 'US']
-country_list = ['ES']
+country_list = ['ES', 'FR', 'GB', 'US']
+#country_list = ['ES']
 
 for country in country_list:
     print('Now finding estimates for ' + country + '\n')
     
     # Read Lorenz curve and growth to be used in estimation from the corresponding .csv file
-    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '_1988.csv'
+    path_to_lorenz = '../../output/countryWealth/wealthData_' + country + '.csv'
     lorenz_long_data = pd.read_csv(path_to_lorenz)['botsh_now'].values
     lorenz_long_data = np.hstack((np.array(0.0), lorenz_long_data, np.array(1.0)))
     lorenz_target = lorenz_long_data[np.array([int(100*p) for p in Params.percentiles_to_match])]
@@ -85,7 +85,7 @@ for country in country_list:
         KY_target = pd.read_csv(path_to_lorenz)['KY_now'].values[0]
     else:
         KY_target = 10.26
-    estimation_growth = pd.read_csv(path_to_lorenz)['growth_before_1'].values[0]**0.25
+    estimation_growth = pd.read_csv(path_to_lorenz)['growth_before_penn'].values[0]**0.25
     
     # Make AgentTypes for estimation
     if Params.do_lifecycle:
@@ -246,7 +246,7 @@ for country in country_list:
             plt.ylim([-0.02,1.0])
             plt.legend(loc='upper left')
             plt.show()
-            fig.savefig('../../output/countryEstimates/' + country + Params.spec_name + '.pdf')
+            fig.savefig('../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '.pdf')
         else:
             fig = plt.figure()
             plt.plot(LorenzAxis, EstimationEconomy.LorenzData, '-k', linewidth=1.5, label = country+' data')
@@ -257,12 +257,12 @@ for country in country_list:
             plt.ylim([-0.02,1.0])
             plt.legend(loc='upper left')
             plt.show()
-            fig.savefig('../../output/countryEstimates/' + country + Params.spec_name + '.pdf')
+            fig.savefig('../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '.pdf')
         
         # Save estimates and a bunch of parameters used in estimation
-        with open('../../output/countryEstimates/' + country + Params.spec_name + '.pkl', 'w') as f:
+        with open('../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '.pkl', 'w') as f:
             pickle.dump([center_estimate, spread_estimate], f)
-        with open('../../output/countryEstimates/' + country + Params.spec_name + '.txt','w') as f:
+        with open('../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '.txt','w') as f:
             f.write('center_estimate = %s \
                     \nspread_estimate = %s \
                     \ngrowth factor used for estimation is %s \
@@ -285,7 +285,7 @@ for country in country_list:
                        t_end-t_start))
             
         # Save EstimationEconomy
-        with open('../../output/countryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'wb') as f:
+        with open('../../output/countryEstimates_longer_horizon/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'wb') as f:
             pickle.dump(EstimationEconomy, f, pickle.HIGHEST_PROTOCOL)
 
 
