@@ -12,7 +12,7 @@
 # Link to computer codes: http://wid.world/static/computer-codes.zip
 #
 # OECD/Eurostat
-# ---------
+# --------------
 # Wealth gini data comes from an experimental data set on Income, Consumption and Wealth (ICW)
 # Link to data description: http://ec.europa.eu/eurostat/web/experimental-statistics/income-consumption-and-wealth
 # Link to article discussing results: http://ec.europa.eu/eurostat/statistics-explained/index.php/Interaction_of_household_income,_consumption_and_wealth_-_statistics_on_main_results
@@ -39,7 +39,7 @@
 # "mean_to_median"  "top1_share"      "top1_to_median"  "top5_share"      "top5_to_median" 
 # "top10_share"     "top10_to_median" "bot20_share"     "bot20_to_median" "bot60_share"    
 # "top20_to_bot20"  "mid60_share"     "gini"            "source"          "gdp_now"        
-# "gdp_last25"      "gdp_growth"
+# "gdp_last40"      "gdp_growth"
 # ================================================================================================ #
 
 library(plyr)
@@ -281,6 +281,15 @@ oecd_top20_to_bot20 <- oecd_report %>%
 oecd_report_inequality <- right_join(country_iso, oecd_top20_to_bot20, by="country") %>%
   arrange(iso, year)
 
+# Construct mean to median ratio
+oecd_report_mean_to_median <- oecd_report %>%
+  rename(country = X__1) %>%
+  mutate(mean_to_median = Mean/Median,
+         year = 2010) %>%
+  select(country, year, mean_to_median)
+oecd_report_inequality <- left_join(oecd_report_inequality, oecd_report_mean_to_median,
+                                    by=c("country", "year"))
+
 # Construct wealth share of middle 60%
 oecd_mid60_share <- oecd_report %>%
   rename(country = X__1,
@@ -326,21 +335,21 @@ gdp_raw <- read.csv('./worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
 #gdp_growth <- read.csv('./worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
 
 # Before joining with GDP data make a list of variables to keep
-keep <- c(colnames(wealth_inequality), "gdp_now", "gdp_last25", "gdp_growth")
+keep <- c(colnames(wealth_inequality), "gdp_now", "gdp_last40", "gdp_growth")
 
 # Join inequality with GDP data
 wealth_inequality <- left_join(wealth_inequality, gdp_raw, by=c("country" = "CountryName"))
 
-# Add growth variable (from 25 years before observation year)
+# Add growth variable (from 40 years before observation year)
 wealth_inequality <- adply(wealth_inequality, 1, function(row){
-  if(row$year < 1985) {
-    output <- data_frame(gdp_now=NA, gdp_last25=NA, gdp_growth=NA)
+  if(row$year < 1960 + 40) {
+    output <- data_frame(gdp_now=NA, gdp_last40=NA, gdp_growth=NA)
   }
   else {
     gdp_now <- as.numeric(row[grep(as.character(row$year), colnames(row))]) # get current GDP
-    gdp_last25 <- as.numeric(row[grep(as.character(row$year - 25), colnames(row))]) # get past GDP
-    gdp_growth <- (gdp_now/gdp_last25)^(1/25) # get annualized growth factor
-    output <- data_frame(gdp_now=gdp_now, gdp_last25=gdp_last25, gdp_growth=gdp_growth)
+    gdp_last40 <- as.numeric(row[grep(as.character(row$year - 40), colnames(row))]) # get past GDP
+    gdp_growth <- (gdp_now/gdp_last40)^(1/40) # get annualized growth factor
+    output <- data_frame(gdp_now=gdp_now, gdp_last40=gdp_last40, gdp_growth=gdp_growth)
   }
   return(output)
 })
