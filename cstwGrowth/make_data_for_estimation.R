@@ -201,8 +201,7 @@ get_lorenz_curve <- function(ISO = "US", YEAR1 = 1984, YEAR2 = 2014) {
            after = YEAR2)
   
   name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/output/countryWealth/wealthData_', 
-                  ISO, '_', as.character(YEAR1), '_', as.character(YEAR2), '.csv'),
-                collapse = '')
+                  ISO, '.csv'), collapse = '')
   write_csv(output, name)
 }
 
