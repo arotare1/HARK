@@ -80,28 +80,41 @@ world_dist <- bind_rows(world_dist, wealth_spain)
 
 
 # ----------------------------------------------------------------------------------------------- #
-# Write function that takes country, year, interval as input and creates a .csv file with the 
+# Write function that takes a country and two years as input and creates a .csv file with the 
 # following structure:
 # prc | bottom share now | bottom share after | K/Y now | K/Y after | growth before | growth after
 # ----------------------------------------------------------------------------------------------- #
 
 # Import real GDP data from the World Bank
-gdp_raw <- read.csv('../worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
-gdp_growth <- read.csv('../worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
+gdp_wb <- read.csv('../worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
+gdp_growth_wb <- read.csv('../worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
+
+# Import real GDP data from Penn World Table
+gdp_penn <- read_excel('../penn_table_gdp/FebPwtExport6192018.xlsx', sheet='Data')
+
 
 # Import wealth-to-income ratio from WID.world
-# Note: assumes years of interest are 1988 and 2013!
-KY_now_ES <- 4.23159027099609   # 1988
-KY_now_FR <- 3.22252440452576
-KY_now_GB <- 3.71645903587341
-KY_now_US <- 3.64715075492859
-KY_after_ES <- 6.56139802932739 # 2013
-KY_after_FR <- 5.86394023895264
-KY_after_GB <- 5.63525152206421
-KY_after_US <- 4.6410756111145
 
-get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
-  # Get average real GDP growth from past and future LAG years. Use two measures for consistency
+# KY_now_ES <- 4.23159027099609   # 1988
+# KY_now_FR <- 3.22252440452576
+# KY_now_GB <- 3.71645903587341
+# KY_now_US <- 3.64715075492859
+# KY_after_ES <- 6.56139802932739 # 2013
+# KY_after_FR <- 5.86394023895264
+# KY_after_GB <- 5.63525152206421
+# KY_after_US <- 4.6410756111145
+
+KY_now_ES <- 3.68297553062439 # 1984
+KY_now_FR <- 3.25881457328796 # 1984
+KY_now_GB <- 2.76541519165039 # 1982
+KY_now_US <- 3.30949544906616 # 1984
+KY_after_ES <- 6.56139802932739 # 2013
+KY_after_FR <- 5.80645942687988 # 2014
+KY_after_GB <- 5.57926177978516 # 2012
+KY_after_US <- 4.91764497756958 # 2014
+
+get_lorenz_curve <- function(ISO = "US", YEAR1 = 1984, YEAR2 = 2014) {
+  # Get average real GDP growth between YEAR1 and YEAR2
   if(ISO=="ES") {
     CountryCode <- "ESP"
     KY_now <- KY_now_ES
@@ -123,56 +136,86 @@ get_lorenz_curve <- function(ISO = "US", YEAR = 1988, LAG = 25) {
     KY_after <- KY_after_US
   }
   
-  before <- as.character(YEAR - LAG)
-  before_plus_one <- as.character(YEAR - LAG + 1)
-  now <- as.character(YEAR)
-  now_plus_one <- as.character(YEAR + 1)
-  after <- as.character(YEAR + LAG)
-
-  gdp_before <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(before, colnames(gdp_raw))]
-  gdp_now <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(now, colnames(gdp_raw))]
-  gdp_after <- gdp_raw[gdp_raw$CountryCode==CountryCode, grep(after, colnames(gdp_raw))]
-  growth_before_1 <- (gdp_now/gdp_before)^(1/LAG)
-  growth_after_1 <- (gdp_after/gdp_now)^(1/LAG)
+  LAG = YEAR2 - YEAR1
   
-  range_before <- grep(before_plus_one, colnames(gdp_growth)) : grep(now, colnames(gdp_growth))
-  range_after <- grep(now_plus_one, colnames(gdp_growth)) : grep(after, colnames(gdp_growth))
-  rates_before <- as.numeric(gdp_growth[gdp_growth$CountryCode==CountryCode, range_before])
-  rates_after <- as.numeric(gdp_growth[gdp_growth$CountryCode==CountryCode, range_after])
-                  
-  growth_before_2 <- mean(rates_before)/100 + 1
-  growth_after_2 <- mean(rates_after)/100 + 1
+  gdp_before_penn <- (gdp_penn %>% filter(RegionCode==CountryCode & YearCode==YEAR1-LAG))$AggValue
+  gdp_before_penn <- as.numeric(gdp_before_penn)
   
-  # Get Lorenz curves from YEAR and YEAR+LAG
+  gdp_now_penn <- (gdp_penn %>% filter(RegionCode==CountryCode & YearCode==YEAR1))$AggValue
+  gdp_now_penn <- as.numeric(gdp_now_penn)
+  
+  gdp_after_penn <- (gdp_penn %>% filter(RegionCode==CountryCode & YearCode==YEAR2))$AggValue
+  gdp_after_penn <- as.numeric(gdp_after_penn)
+  
+  growth_before_penn <- (gdp_now_penn/gdp_before_penn)^(1/LAG)
+  growth_after_penn <- (gdp_after_penn/gdp_now_penn)^(1/LAG)
+  
+  if(YEAR1 - LAG < 1960) { # We don't have World Bank Data on GDP
+    growth_before_wb1 <- NA
+    growth_before_wb2 <- NA
+    growth_after_wb1 <- NA
+    growth_after_wb2 <- NA
+  } else {
+    before <- as.character(YEAR1 - LAG)
+    before_plus_one <- as.character(YEAR1 - LAG + 1)
+    now <- as.character(YEAR1)
+    now_plus_one <- as.character(YEAR1 + 1)
+    after <- as.character(YEAR2)
+    
+    gdp_before_wb <- gdp_wb[gdp_wb$CountryCode==CountryCode, grep(before, colnames(gdp_wb))]
+    gdp_now_wb <- gdp_wb[gdp_wb$CountryCode==CountryCode, grep(now, colnames(gdp_wb))]
+    gdp_after_wb <- gdp_wb[gdp_wb$CountryCode==CountryCode, grep(after, colnames(gdp_wb))]
+    growth_before_wb1 <- (gdp_now_wb/gdp_before_wb)^(1/LAG)
+    growth_after_wb1 <- (gdp_after_wb/gdp_now_wb)^(1/LAG)
+    
+    range_before <- grep(before_plus_one, colnames(gdp_growth_wb)) : grep(now, colnames(gdp_growth_wb))
+    range_after <- grep(now_plus_one, colnames(gdp_growth_wb)) : grep(after, colnames(gdp_growth_wb))
+    rates_before <- as.numeric(gdp_growth_wb[gdp_growth_wb$CountryCode==CountryCode, range_before])
+    rates_after <- as.numeric(gdp_growth_wb[gdp_growth_wb$CountryCode==CountryCode, range_after])
+    
+    growth_before_wb2 <- mean(rates_before)/100 + 1
+    growth_after_wb2 <- mean(rates_after)/100 + 1
+  }
+  
+  # Get Lorenz curves from YEAR1 and YEAR2
   lorenz_now <- world_dist %>% 
-    filter(iso == ISO & year == YEAR) %>% 
+    filter(iso == ISO & year == YEAR1) %>% 
     select(p, botsh) %>%
     rename(botsh_now = botsh)
   lorenz_after <- world_dist %>% 
-    filter(iso == ISO & year == YEAR+LAG) %>% 
+    filter(iso == ISO & year == YEAR2) %>% 
     select(p, botsh) %>%
     rename(botsh_after = botsh)
   
   output <- inner_join(lorenz_now, lorenz_after) %>%
     mutate(KY_now = KY_now,
            KY_after = KY_after,
-           growth_before_1 = growth_before_1,
-           growth_before_2 = growth_before_2,
-           growth_after_1 = growth_after_1,
-           growth_after_2 = growth_after_2,
-           now = YEAR,
-           before = YEAR-LAG,
-           after = YEAR+LAG)
+           growth_before_penn = growth_before_penn,
+           growth_after_penn = growth_after_penn,
+           growth_before_wb1 = growth_before_wb1,
+           growth_before_wb2 = growth_before_wb2,
+           growth_after_wb1 = growth_after_wb1,
+           growth_after_wb2 = growth_after_wb2,
+           now = YEAR1,
+           before = YEAR1-LAG,
+           after = YEAR2)
   
   name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/output/countryWealth/wealthData_', 
-                  ISO, '_', as.character(YEAR), ".csv"), collapse = '')
+                  ISO, '_', as.character(YEAR1), '_', as.character(YEAR2), '.csv'),
+                collapse = '')
   write_csv(output, name)
 }
 
-get_lorenz_curve(ISO = "ES", YEAR = 1988)
-get_lorenz_curve(ISO = "FR", YEAR = 1988)
-get_lorenz_curve(ISO = "GB", YEAR = 1988)
-get_lorenz_curve(ISO = "US", YEAR = 1988)
+# get_lorenz_curve(ISO = "ES", YEAR1 = 1988, YEAR2 = 2013)
+# get_lorenz_curve(ISO = "FR", YEAR1 = 1988, YEAR2 = 2013)
+# get_lorenz_curve(ISO = "GB", YEAR1 = 1988, YEAR2 = 2013)
+# get_lorenz_curve(ISO = "US", YEAR1 = 1988, YEAR2 = 2013)
+
+get_lorenz_curve(ISO = "ES", YEAR1 = 1984, YEAR2 = 2013)
+get_lorenz_curve(ISO = "FR", YEAR1 = 1984, YEAR2 = 2014)
+get_lorenz_curve(ISO = "GB", YEAR1 = 1982, YEAR2 = 2012)
+get_lorenz_curve(ISO = "US", YEAR1 = 1984, YEAR2 = 2014)
+
 
 
 
