@@ -181,7 +181,7 @@ class cstwMPCmarket(EstimationMarketClass):
                                                      percentiles=np.arange(0.01,1.0,0.01),presorted=False)
                 self.LorenzLongNrm = getLorenzShares(aNrm,weights=CohortWeight,
                                                      percentiles=np.arange(0.01,1.0,0.01),presorted=False)
-                self.LorenzLongInc = getLorenzShares(pLvl,weights=CohortWeight,
+                self.LorenzLongInc = getLorenzShares(IncLvl,weights=CohortWeight,
                                                      percentiles=np.arange(0.01,1.0,0.01),presorted=False)                
         else: # Store nothing if we don't want Lorenz data
             self.LorenzLvl = np.nan
