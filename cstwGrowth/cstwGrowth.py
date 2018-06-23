@@ -1,6 +1,5 @@
 '''
-Adapts the cstwMPC model and examines what it implies about the relationship between
-wealth inequality and growth.
+Slightly adapts the cstwMPC model to study growth and wealth inequality
 '''
 
 # Import the HARK library.  The assumption is that this code is in a folder
@@ -13,7 +12,6 @@ sys.path.insert(0, os.path.abspath('../ConsumptionSaving'))
 
 import numpy as np
 from copy import copy, deepcopy
-from time import clock
 from HARKutilities import approxMeanOneLognormal, combineIndepDstns, approxUniform, \
                           getPercentiles, getLorenzShares, calcSubpopAvg, approxLognormal
 from HARKsimulation import drawDiscrete
@@ -22,11 +20,6 @@ from HARKcore import Market
 import SetupParams as Params
 import ConsIndShockModel as Model
 from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
-from scipy.optimize import golden, brentq
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import pickle
-import pandas as pd
 
 mystr = lambda number : "{:.3f}".format(number)
 
