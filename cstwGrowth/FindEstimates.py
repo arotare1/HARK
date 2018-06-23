@@ -8,6 +8,7 @@ Saves output in ../output/BaselineEstimates/
 
 import pdb
 import numpy as np
+from copy import copy, deepcopy
 from time import clock
 import matplotlib.pyplot as plt
 import pickle
