@@ -1,9 +1,9 @@
 '''
 Finds estimates for the center and spread of the beta distribution for 2014 US data.
 
-Reads wealth data from ../output/CountryWealth/
+Reads wealth data from ../../output/CountryWealth/
 
-Saves output in ../output/BaselineEstimates/
+Saves output in ../../output/BaselineEstimates/
 '''
 
 import pdb
@@ -23,7 +23,6 @@ do_actual_KY = False            # Use actual K/Y ratio from WID.world if True, 1
 estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
-#path_estimation_growth = 'NoGrowth/' if estimation_growth == 1 else ''
 
 pdb.set_trace()
 
