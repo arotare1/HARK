@@ -20,26 +20,28 @@
 #
 # OECD
 # -----
-# Data on mean-to-median and wealth shares is from the Wealth Distribution Database (WDD)
+# Data on mean-to-median and most wealth shares is from the Wealth Distribution Database (WDD)
 # Link to data: https://stats.oecd.org/Index.aspx?DataSetCode=WEALTH
-# Data on all other indicators is from tables in the 2015 report "In It Together: Why Less Inequality Benefits All"
+# Data on bottom 40% share is from the following report
+# Balestra, C. and R. Tonkin (2018), “Inequalities in household wealth across OECD countries: Evidence from the OECD Wealth Distribution Database”, OECD Statistics Working Papers, 2018/01, OECD Publishing, Paris
+# Also import data from table 6.3. in the 2015 report "In It Together: Why Less Inequality Benefits All"
 # Link to report: https://www.oecd-ilibrary.org/employment/in-it-together-why-less-inequality-benefits-all_9789264235120-en
 # Link to table 6.3.: http://dx.doi.org/10.1787/888933209076
 #
 # World Bank
 # -----------
-# Growth rates are from the World Bank
-# The first measure computes the annualized growth rate of real gdp from start to end period
+# Growth is computed as the annualized growth of real GDP from start to end period
 # Link: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD
-# The second measure averages over annual real gdp growth rates over relevant period
-# Link: https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG
 #
 # The resulting dataset has the following columns:
-# "country"         "iso"             "year"            "mean"            "median"         
-# "mean_to_median"  "top1_share"      "top1_to_median"  "top5_share"      "top5_to_median" 
-# "top10_share"     "top10_to_median" "bot20_share"     "bot20_to_median" "bot60_share"    
-# "top20_to_bot20"  "mid60_share"     "gini"            "source"          "gdp_now"        
-# "gdp_last40"      "gdp_growth"
+# "country"         "iso"             "year"            "gini"            "mean"           
+# "median"          "mean_to_median"  "top1_share"      "top5_share"      "top10_share"    
+# "bot20_share"     "bot40_share"     "bot60_share"     "mid60_share"     "bot90_share"    
+# "bot95_share"     "bot99_share"     "top1_to_median"  "top5_to_median"  "top10_to_median"
+# "bot20_to_median" "bot40_to_median" "bot90_to_median" "bot95_to_median" "bot99_to_median"
+# "gdp_now"         "gdp_last20"      "gdp_last25"      "gdp_last30"      "gdp_last35"
+# "gdp_last40"      "growth_last20"   "growth_last25"   "growth_last30"   "growth_last35"
+# "growth_last40"   "source"          "quality"
 # ================================================================================================ #
 
 library(plyr)
@@ -60,10 +62,15 @@ country_iso <- tibble(country = c("Australia","Austria","Belgium","Canada","Chil
                                   "Greece","Hungary","Ireland","Italy","Japan","Korea","Latvia",
                                   "Luxembourg","Malta","Netherlands","New Zealand","Norway",
                                   "Poland","Portugal","Slovak Republic","Slovakia","Slovenia",
-                                  "Spain","United Kingdom","United  Kingdom","United States"),
+                                  "Spain","United Kingdom","United  Kingdom","United States",
+                                  "Brazil","China","Colombia","Czech Republic","India","Indonesia",
+                                  "Israel","Mexico","Russian Federation","Singapore","South Africa",
+                                  "Sweden","Switzerland","Taiwan","Thailand"),
                       iso = c("AU", "AT", "BE", "CA", "CL", "CY", "DK", "EE", "FI", "FR", "DE",
                               "GR", "HU", "IE", "IT", "JP", "KR", "LV", "LU", "MT", "NL", "NZ",
-                              "NO", "PL", "PT", "SK", "SK", "SI", "ES", "GB","GB", "US"))
+                              "NO", "PL", "PT", "SK", "SK", "SI", "ES", "GB", "GB", "US", "BR",
+                              "CN", "CO", "CZ", "IN", "ID", "IL", "MX", "RU", "SG", "ZA", "SE",
+                              "CH", "TW", "TH"))
 
 # ---------------------- #
 # Import WID.world data
@@ -92,36 +99,30 @@ wid_mean_to_median <- wid %>%
 # Create inital dataset and append new measures as we create them
 wealth_inequality <- right_join(country_iso, wid_mean_to_median, by = "iso")
 
-# Construct wealth shares of top 1%, 5%, 10%, bottom 20% and corresponding percent
-# deviation from median. The latter measure top- and bottom inequality and are computed as:
-# (avg wealth of top x% - median)/median and (median - avg wealth of bottom x%)/median
+# Construct wealth shares of top 1%, 5%, 10%, bottom 20% and corresponding ratio to median.
 wid_top1_share <- wid %>%
   group_by(iso, year) %>%
   filter(p < 99000) %>%
   summarise(top1_share = 1-sum(sinc))
 wealth_inequality <- left_join(wealth_inequality, wid_top1_share, by=c("iso", "year"))
-wealth_inequality %<>% mutate(top1_to_median = ((top1_share*mean/0.01)-median)/median)
    
 wid_top5_share <- wid %>%
   group_by(iso, year) %>%
   filter(p < 95000) %>%
   summarise(top5_share = 1-sum(sinc))
 wealth_inequality <- left_join(wealth_inequality, wid_top5_share, by=c("iso", "year"))
-wealth_inequality %<>% mutate(top5_to_median = ((top5_share*mean/0.05)-median)/median)
 
 wid_top10_share <- wid %>%
   group_by(iso, year) %>%
   filter(p < 90000) %>%
   summarise(top10_share = 1-sum(sinc))
 wealth_inequality <- left_join(wealth_inequality, wid_top10_share, by=c("iso", "year"))
-wealth_inequality %<>% mutate(top10_to_median = ((top10_share*mean/0.1)-median)/median)
 
 wid_bot20_share <- wid %>%
   group_by(iso, year) %>%
   filter(p < 20000) %>%
   summarise(bot20_share = sum(sinc))
 wealth_inequality <- left_join(wealth_inequality, wid_bot20_share, by=c("iso", "year"))
-wealth_inequality %<>% mutate(bot20_to_median = (median-(bot20_share*mean/0.2))/median)
 
 # Construct wealth share of bottom 60%
 wid_bot60_share <- wid %>%
@@ -129,6 +130,13 @@ wid_bot60_share <- wid %>%
   filter(p < 60000) %>%
   summarise(bot60_share = sum(sinc))
 wealth_inequality <- left_join(wealth_inequality, wid_bot60_share, by=c("iso", "year"))
+
+# Construct wealth share of bottom 40%
+wid_bot40_share <- wid %>%
+  group_by(iso, year) %>%
+  filter(p < 40000) %>%
+  summarise(bot40_share = sum(sinc))
+wealth_inequality <- left_join(wealth_inequality, wid_bot40_share, by=c("iso", "year"))
 
 # Construct ratio of top quintile to bottom quintile
 wid_top20_share <- wid %>%
@@ -151,6 +159,9 @@ wealth_inequality$gini <- NA
 # Add column with source
 wealth_inequality$source <- "WID.world"
 
+# Add column with data quality
+wealth_inequality$quality <- "Good"
+
 
 # -------------------------- #
 # Import OECD/Eurostat data
@@ -160,9 +171,11 @@ eurostat <- read.csv("./oecd_wealth/oecd_eurostat_icw_sr_05/icw_sr_05_1_Data.csv
 
 eurostat_gini <- eurostat %>%
   filter(STK_FLOW=="Net wealth" & Value!=":") %>% 
-  rename(country = GEO, year = TIME, gini = Value) %>%
-  mutate(source = "OECD/Eurostat ICW") %>%
-  select(country, year, gini, source)
+  rename(country = GEO, year = TIME) %>%
+  mutate(gini = as.numeric(Value)/100,
+         source = "OECD/Eurostat ICW",
+         quality = "Satisfactory") %>%
+  select(country, year, gini, source, quality)
 
 eurostat_gini <- left_join(eurostat_gini, country_iso, by="country")
 
@@ -176,22 +189,21 @@ wealth_inequality <- bind_rows(wealth_inequality, eurostat_gini)
 
 oecd_wdd <- read.csv("./oecd_wealth/oecd_wdd/WEALTH_17062018190946358.csv")
 
-# Construct mean-to-median ratio. For GB only household level data is available, so use that
-# instead of individual level data that was used for the others
+# Construct mean-to-median ratio. For countries other than Canada take the latest year
 oecd_mean <- oecd_wdd %>%
-  filter(Variable=="Mean net wealth per household (current prices)") %>%
+  filter(Variable=="Mean net wealth per household (current prices)" & Country!="Canada") %>%
   group_by(Country) %>%
   rename(country = Country) %>%
   summarise(year = max(TIME),
             mean = Value[which.max(TIME)])
 oecd_median <- oecd_wdd %>%
-  filter(Variable=="Median net wealth per household (current prices)") %>%
+  filter(Variable=="Median net wealth per household (current prices)" & Country!="Canada") %>%
   group_by(Country) %>%
   rename(country = Country) %>%
   summarise(year = max(TIME),
             median = Value[which.max(TIME)])
 
-# For Canada, add 2012 because this is the year with latest wealth share data
+# For Canada, use 2012 because this is the year with latest wealth share data
 oecd_CA_mean <- oecd_wdd %>%
   filter(Country=="Canada" & TIME==2012 & 
            Variable=="Mean net wealth per household (current prices)") %>%
@@ -225,7 +237,6 @@ oecd_top1_share <- oecd_wdd %>%
   summarise(year = max(TIME),
             top1_share = Value[which.max(TIME)]/100)
 oecd_inequality <- left_join(oecd_inequality, oecd_top1_share, by=c("country", "year"))
-oecd_inequality %<>% mutate(top1_to_median = ((top1_share*mean/0.01)-median)/median)
 
 oecd_top5_share <- oecd_wdd %>%
   filter(VAR=="ST5") %>%
@@ -234,7 +245,6 @@ oecd_top5_share <- oecd_wdd %>%
   summarise(year = max(TIME),
             top5_share = Value[which.max(TIME)]/100)
 oecd_inequality <- left_join(oecd_inequality, oecd_top5_share, by=c("country", "year"))
-oecd_inequality %<>% mutate(top5_to_median = ((top5_share*mean/0.05)-median)/median)
 
 oecd_top10_share <- oecd_wdd %>%
   filter(VAR=="ST10") %>%
@@ -243,7 +253,6 @@ oecd_top10_share <- oecd_wdd %>%
   summarise(year = max(TIME),
             top10_share = Value[which.max(TIME)]/100)
 oecd_inequality <- left_join(oecd_inequality, oecd_top10_share, by=c("country", "year"))
-oecd_inequality %<>% mutate(top10_to_median = ((top10_share*mean/0.1)-median)/median)
 
 # Construct wealth share of bottom 60%
 oecd_bot60_share <- oecd_wdd %>%
@@ -251,11 +260,28 @@ oecd_bot60_share <- oecd_wdd %>%
   group_by(Country) %>%
   rename(country = Country) %>%
   summarise(year = max(TIME),
-            bot60_share = Value[which.max(TIME)])
+            bot60_share = Value[which.max(TIME)]/100)
 oecd_inequality <- left_join(oecd_inequality, oecd_bot60_share, by=c("country", "year"))
+
+# Construct wealth share of bottom 40%. This is not included in the database. I import it manually
+# from Balestra and Tonkin (2018) Table 2.1
+oecd_bot40_share <- tibble(country = c("Australia","Austria","Belgium","Canada","Chile","Denmark",
+                                        "Estonia","Finland","France","Germany","Greece","Hungary",
+                                        "Ireland","Italy","Japan","Korea","Latvia","Luxembourg",
+                                        "Netherlands","New Zealand","Norway","Poland","Portugal",
+                                        "Slovak Republic","Slovenia","Spain","United Kingdom",
+                                        "United States"),
+                            bot40_share = c(4.9, 1.0, 5.7, 3.4, 0.0, -8.6, 3.8, 2.2, 2.7, 0.5,
+                                            5.3, 5.0, -2.1, 4.5, 5.3, 6.0, 0.0, 3.9, -6.9, 3.1, 
+                                            -3.0, 6.2, 3.2, 10.6, 5.6, 6.9, 3.4, -0.1))
+oecd_inequality <- left_join(oecd_inequality, oecd_bot40_share, by=c("country")) %>%
+  mutate(bot40_share = bot40_share/100)
 
 # Add column with source
 oecd_inequality$source <- "OECD WDD"
+
+# Add column with data quality
+oecd_inequality$quality <- "Good"
 
 # Join with big dataset
 wealth_inequality <- bind_rows(wealth_inequality, oecd_inequality)
@@ -290,6 +316,26 @@ oecd_report_mean_to_median <- oecd_report %>%
 oecd_report_inequality <- left_join(oecd_report_inequality, oecd_report_mean_to_median,
                                     by=c("country", "year"))
 
+# Construct ratio of average wealth of top 5% to median: (top5_avg-median)/median
+oecd_report_top5_to_median <- oecd_report %>%
+  rename(country = X__1,
+         top5_median = `Ratio\n(wealth of top 5% - median wealth)/\nmedian`) %>%
+  filter(country != "Korea") %>%
+  mutate(year = 2010,
+         top5_to_median = as.numeric(top5_median)) %>%
+  select(country, year, top5_to_median)
+oecd_report_inequality <- left_join(oecd_report_inequality, oecd_report_top5_to_median, 
+                                    by=c("country", "year"))
+
+# Construct ratio of average wealth of bottom 20% to median: (bot_60_avg-median)/median
+oecd_report_bot20_to_median <- oecd_report %>%
+  rename(country = X__1,
+         bot20_to_median = `Ratio\n(median wealth - bottom quintile)/\nmedian`) %>%
+  mutate(year = 2010) %>%
+  select(country, year, bot20_to_median)
+oecd_report_inequality <- left_join(oecd_report_inequality, oecd_report_bot20_to_median, 
+                                    by=c("country", "year"))
+
 # Construct wealth share of middle 60%
 oecd_mid60_share <- oecd_report %>%
   rename(country = X__1,
@@ -300,31 +346,61 @@ oecd_mid60_share <- oecd_report %>%
 oecd_report_inequality <- left_join(oecd_report_inequality, oecd_mid60_share, 
                                     by=c("country", "year"))
   
-# Construct ratio of average wealth of top 5% to median: (top5_avg-median)/median
-oecd_top5_to_median <- oecd_report %>%
-  rename(country = X__1,
-         top5_median = `Ratio\n(wealth of top 5% - median wealth)/\nmedian`) %>%
-  filter(country != "Korea") %>%
-  mutate(year = 2010,
-         top5_to_median = as.numeric(top5_median)) %>%
-  select(country, year, top5_to_median)
-oecd_report_inequality <- left_join(oecd_report_inequality, oecd_top5_to_median, 
-                                    by=c("country", "year"))
-
-# Construct ratio of average wealth of bottom 20% to median: (bot_60_avg-median)/median
-oecd_bot20_to_median <- oecd_report %>%
-  rename(country = X__1,
-         bot20_to_median = `Ratio\n(median wealth - bottom quintile)/\nmedian`) %>%
-  mutate(year = 2010) %>%
-  select(country, year, bot20_to_median)
-oecd_report_inequality <- left_join(oecd_report_inequality, oecd_bot20_to_median, 
-                                    by=c("country", "year"))
-
 # Add column with source
 oecd_report_inequality$source <- "OECD In it Together"
 
+# Add column with data quality
+oecd_report_inequality$quality <- "Satisfactory"
+
 # Join with big dataset
 wealth_inequality <- bind_rows(wealth_inequality, oecd_report_inequality)
+
+
+# ------------------------------------------------------------------ #
+# Import wealth data from Credit Suisse Global Wealth Databook 2017
+# ------------------------------------------------------------------ #
+
+cs_wealth1 <- read.csv("./credit_suisse_wealth/tabula-databook_table_6_1.csv", header=FALSE)
+cs_wealth2 <- read.csv("./credit_suisse_wealth/tabula-databook_table_6_5.csv", header=FALSE)
+cs_wealth3 <- read.csv("./credit_suisse_wealth/tabula-databook_table_3_1.csv", header=FALSE)
+cs_wealth3 <- cs_wealth3[1:171,]
+
+cs_wealth1 <- cs_wealth1 %>% 
+  rename(country = V1, mean = V5, median = V6, quality = V11) %>%
+  mutate(country = as.character(country),
+         mean  = as.numeric(gsub(",", "", mean)),
+         median = as.numeric(gsub(",", "", median)),
+         mean_to_median = mean/median,
+         source = "Credit Suisse",
+         year = 2016) %>%
+  select(country, year, mean, median, mean_to_median, quality, source)
+
+cs_wealth2 <- cs_wealth2 %>%
+  rename(country = V1) %>%
+  mutate(country = as.character(country),
+         top1_share = V13/100,
+         top5_share = V12/100,
+         top10_share = V11/100,
+         bot20_share = (V2+V3)/100,
+         bot40_share = (V2+V3+V4+V5)/100,
+         top20_share = (100-V2-V3-V4-V5-V6-V7-V8-V9)/100,
+         mid60_share = 1-top20_share-bot20_share,
+         top20_to_bot20 = top20_share/bot20_share) %>%
+  select(country, top1_share, top5_share, top10_share, bot20_share, bot40_share,mid60_share, 
+         top20_to_bot20)
+
+cs_wealth3 <- cs_wealth3 %>%
+  rename(country = V1, gini = V10) %>%
+  mutate(country = as.character(country),
+         gini = gini/100) %>%
+  select(country, gini)
+
+cs_wealth <- left_join(cs_wealth1, cs_wealth2, by="country")
+cs_wealth <- left_join(cs_wealth, cs_wealth3, by="country")
+cs_wealth <- right_join(country_iso, cs_wealth, by="country")
+
+# Join with big dataset
+wealth_inequality <- bind_rows(wealth_inequality, cs_wealth)
 
 
 # ----------------------------------------- #
@@ -332,37 +408,74 @@ wealth_inequality <- bind_rows(wealth_inequality, oecd_report_inequality)
 # ----------------------------------------- #
 
 gdp_raw <- read.csv('./worldbank_gdp/API_NY.GDP.MKTP.KD_DS2_en_csv_v2.csv')
-#gdp_growth <- read.csv('./worldbank_growth/API_NY.GDP.MKTP.KD.ZG_DS2_en_csv_v2.csv')
-
-# Before joining with GDP data make a list of variables to keep
-keep <- c(colnames(wealth_inequality), "gdp_now", "gdp_last40", "gdp_growth")
 
 # Join inequality with GDP data
 wealth_inequality <- left_join(wealth_inequality, gdp_raw, by=c("country" = "CountryName"))
 
-# Add growth variable (from 40 years before observation year)
+# Add growth variable (from 25 years before observation year)
 wealth_inequality <- adply(wealth_inequality, 1, function(row){
-  if(row$year < 1960 + 40) {
-    output <- data_frame(gdp_now=NA, gdp_last40=NA, gdp_growth=NA)
-  }
-  else {
-    gdp_now <- as.numeric(row[grep(as.character(row$year), colnames(row))]) # get current GDP
-    gdp_last40 <- as.numeric(row[grep(as.character(row$year - 40), colnames(row))]) # get past GDP
-    gdp_growth <- (gdp_now/gdp_last40)^(1/40) # get annualized growth factor
-    output <- data_frame(gdp_now=gdp_now, gdp_last40=gdp_last40, gdp_growth=gdp_growth)
-  }
+  gdp_now <- as.numeric(row[grep(as.character(row$year), colnames(row))]) # get current GDP
+  
+  gdp_last20 <- as.numeric(row[grep(as.character(row$year - 20), colnames(row))]) # get past GDP
+  gdp_last20 <- ifelse(length(gdp_last20) > 0, gdp_last20, NA)
+  gdp_last25 <- as.numeric(row[grep(as.character(row$year - 25), colnames(row))]) # get past GDP
+  gdp_last25 <- ifelse(length(gdp_last25) > 0, gdp_last25, NA)
+  gdp_last30 <- as.numeric(row[grep(as.character(row$year - 30), colnames(row))]) # get past GDP
+  gdp_last30 <- ifelse(length(gdp_last30) > 0, gdp_last30, NA)
+  gdp_last35 <- as.numeric(row[grep(as.character(row$year - 35), colnames(row))]) # get past GDP
+  gdp_last35 <- ifelse(length(gdp_last35) > 0, gdp_last35, NA)
+  gdp_last40 <- as.numeric(row[grep(as.character(row$year - 35), colnames(row))]) # get past GDP
+  gdp_last40 <- ifelse(length(gdp_last40) > 0, gdp_last40, NA)
+  
+  growth_last20 <- (gdp_now/gdp_last20)^(1/20) # get annual growth factor
+  growth_last25 <- (gdp_now/gdp_last25)^(1/25)
+  growth_last30 <- (gdp_now/gdp_last30)^(1/30)
+  growth_last35 <- (gdp_now/gdp_last35)^(1/35)
+  growth_last40 <- (gdp_now/gdp_last40)^(1/40)
+  output <- data_frame(gdp_now = gdp_now,
+                       gdp_last20 = gdp_last20,
+                       gdp_last25 = gdp_last25,
+                       gdp_last30 = gdp_last30,
+                       gdp_last35 = gdp_last35,
+                       gdp_last40 = gdp_last40,
+                       growth_last20 = growth_last20,
+                       growth_last25 = growth_last25,
+                       growth_last30 = growth_last30,
+                       growth_last35 = growth_last35,
+                       growth_last40 = growth_last40)
+  
   return(output)
 })
 
-# Delete GDP data
-wealth_inequality <- wealth_inequality[, colnames(wealth_inequality) %in% keep]
+# Compute some extra stats
+wealth_inequality %<>% mutate(bot99_share = 1-top1_share,
+                              bot95_share = 1-top5_share,
+                              bot90_share = 1-top10_share,
+                              top1_to_median = (top1_share*mean/0.01-median)/median,
+                              top5_to_median = if_else(is.na(top5_to_median),
+                                                       (top5_share*mean/0.05-median)/median,
+                                                       top5_to_median),
+                              top10_to_median = (top10_share*mean/0.1-median)/median,
+                              bot20_to_median = if_else(is.na(bot20_to_median),
+                                                              (median-bot20_share*mean/0.2)/median,
+                                                              bot20_to_median),
+                              bot40_to_median = (median-bot40_share*mean/0.4)/median,
+                              bot99_to_median = (bot99_share*mean/0.99-median)/median,
+                              bot95_to_median = (bot95_share*mean/0.95-median)/median,
+                              bot90_to_median = (bot90_share*mean/0.9-median)/median)
+
+# Select which variables to keep
+wealth_inequality %<>% select(country, iso, year, gini, mean, median, mean_to_median,
+                              top1_share, top5_share, top10_share,
+                              bot20_share, bot40_share, bot60_share, mid60_share,
+                              bot90_share, bot95_share, bot99_share,
+                              top1_to_median, top5_to_median, top10_to_median,
+                              bot20_to_median, bot40_to_median,
+                              bot90_to_median, bot95_to_median, bot99_to_median,
+                              gdp_now, gdp_last20, gdp_last25, gdp_last30, gdp_last35, gdp_last40,
+                              growth_last20, growth_last25, growth_last30, growth_last35,
+                              growth_last40, source, quality)
 
 # Save data as .csv
 write_csv(wealth_inequality, 
           "/Users/andreea/Documents/phd/2ndyrpaper/output/countryWealth/wealthData_combined.csv")
-
-
-
-
-
-
