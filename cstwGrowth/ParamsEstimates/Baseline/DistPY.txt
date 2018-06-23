@@ -1,3 +1,0 @@
-center_estimate = 0.983888404763 
-spread_estimate = 0.015225779868785936 
-growth factor used for estimation is 1.0
