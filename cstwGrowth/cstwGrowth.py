@@ -20,6 +20,7 @@ from HARKcore import Market
 import SetupParams as Params
 import ConsIndShockModel as Model
 from ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
+from scipy.optimize import golden, brentq
 
 mystr = lambda number : "{:.3f}".format(number)
 
