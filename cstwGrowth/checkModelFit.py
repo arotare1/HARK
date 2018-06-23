@@ -20,47 +20,47 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference, getLorenzShares, getGini
                         
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
 
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
-do_high_CRRA = False     # Set CRRA coefficient to be 1.25 instead of 1 if True
+do_high_CRRA = True     # Set CRRA coefficient to be 1.25 instead of 1 if True
 do_baseline = not do_actual_KY and not do_more_targets and not do_low_T_age \
                 and not do_high_Rfree and not do_high_CRRA
 
-
-# Update spec_name
-if do_baseline:
-    Params.spec_name = '/baseline/'
-
-if do_more_targets:
-    Params.percentiles_to_match = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    if do_actual_KY and not do_low_T_age:
-        Params.spec_name = '/more_targets/actual_KY/'
-    if do_low_T_age and not do_actual_KY:
-        Params.spec_name = '/more_targets/low_T_age/'
-    if do_low_T_age and do_actual_KY:
-        if do_high_CRRA:
-            Params.spec_name = '/more_targets/low_T_age_actual_KY_high_CRRA/'
-        else:
-            Params.spec_name = '/more_targets/low_T_age_actual_KY/'
-    
-else:
-    if do_actual_KY and not do_low_T_age:
-        Params.spec_name = '/actual_KY/'
-    if do_low_T_age and not do_actual_KY:
-        Params.spec_name = '/low_T_age/'
-    if do_low_T_age and do_actual_KY:
-        if do_high_CRRA:
-            Params.spec_name = '/low_T_age_actual_KY_high_CRRA/'
-        else:
-            Params.spec_name = '/low_T_age_actual_KY/'
-    
-if do_high_Rfree:
-    Params.spec_name = '/high_Rfree/'
+Params.spec_name = '/lower_T_age_actual_KY_high_CRRA/'
+## Update spec_name
+#if do_baseline:
+#    Params.spec_name = '/baseline/'
+#
+#if do_more_targets:
+#    Params.percentiles_to_match = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+#    if do_actual_KY and not do_low_T_age:
+#        Params.spec_name = '/more_targets/actual_KY/'
+#    if do_low_T_age and not do_actual_KY:
+#        Params.spec_name = '/more_targets/low_T_age/'
+#    if do_low_T_age and do_actual_KY:
+#        if do_high_CRRA:
+#            Params.spec_name = '/more_targets/low_T_age_actual_KY_high_CRRA/'
+#        else:
+#            Params.spec_name = '/more_targets/low_T_age_actual_KY/'
+#    
+#else:
+#    if do_actual_KY and not do_low_T_age:
+#        Params.spec_name = '/actual_KY/'
+#    if do_low_T_age and not do_actual_KY:
+#        Params.spec_name = '/low_T_age/'
+#    if do_low_T_age and do_actual_KY:
+#        if do_high_CRRA:
+#            Params.spec_name = '/low_T_age_actual_KY_high_CRRA/'
+#        else:
+#            Params.spec_name = '/low_T_age_actual_KY/'
+#    
+#if do_high_Rfree:
+#    Params.spec_name = '/high_Rfree/'
     
 Params.spec_name += 'Dist' if Params.do_param_dist else 'Point'
 Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
@@ -71,8 +71,8 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
-country_list = ['ES', 'FR', 'GB', 'US']
-#country_list = ['US']
+#country_list = ['ES', 'FR', 'GB', 'US']
+country_list = ['FR', 'US']
 
 for country in country_list:      
     print('Now solving economy of ' + country + '\n')       
