@@ -18,6 +18,8 @@
 # Variable code: wwealp_999_i
 # Variable name: Net Private Wealth to Net National Income Ratio
 # Link: http://wid.world/data/
+#
+# Saves output in ../../output/CountryWealth/
 # ================================================================================================ #
 
 library(plyr)
@@ -199,7 +201,7 @@ get_lorenz_curve <- function(ISO = "US", LAG=20) {
            before = YEAR1-LAG,
            after = YEAR2)
   
-  name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/output/countryWealth/wealthData_', 
+  name <- paste(c('/Users/andreea/Documents/phd/2ndyrpaper/output/CountryWealth/WealthData_', 
                   ISO, '_', as.character(LAG), '.csv'), collapse = '')
   write_csv(output, name)
 }

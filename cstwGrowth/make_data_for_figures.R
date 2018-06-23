@@ -42,6 +42,8 @@
 # "gdp_now"         "gdp_last20"      "gdp_last25"      "gdp_last30"      "gdp_last35"
 # "gdp_last40"      "growth_last20"   "growth_last25"   "growth_last30"   "growth_last35"
 # "growth_last40"   "source"          "quality"
+#
+# Saves output in ../../output/CountryWealth/ 
 # ================================================================================================ #
 
 library(plyr)
@@ -478,4 +480,4 @@ wealth_inequality %<>% select(country, iso, year, gini, mean, median, mean_to_me
 
 # Save data as .csv
 write_csv(wealth_inequality, 
-          "/Users/andreea/Documents/phd/2ndyrpaper/output/countryWealth/wealthData_combined.csv")
+          "/Users/andreea/Documents/phd/2ndyrpaper/output/CountryWealth/WealthData_combined.csv")
