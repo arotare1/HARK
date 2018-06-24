@@ -42,25 +42,28 @@ setwd('/Users/andreea/Documents/phd/2ndyrpaper/HARK/cstwGrowth/Empirical/wid_wea
 world_dist <- read_dta("gpinterized.dta") %>% 
   filter(p > 0 & p <= 99000 & iso != "WO" & iso != "CN") %>%
   mutate(year = as.integer(year), p = p/1000) %>%
-  select(iso, year, p, botsh) %>%
+  rename(mean = totinc) %>%
+  group_by(iso, year) %>%
+  mutate(median = tinc[which(p==50)]) %>%
+  select(iso, year, p, botsh, mean, median) %>%
   arrange(iso, year, p)
 
 # Load wealth data from Spain
 wealth_spain_raw <- read_csv("wealth-spain.csv")
-wealth_spain <- ldply(min(wealth_spain_raw$year):max(wealth_spain_raw$year), function(YEAR) {
-  output <- wealth_spain_raw %>%
-    filter(p <= 0.99 & year==YEAR) %>% 
-    mutate(p = as.integer(lead(p)*100)) %>%
-    select(iso, year, p, sinc)
-  output <- output[complete.cases(output),]
-})
+wealth_spain <- wealth_spain_raw %>%
+  filter(p <= 0.99) %>%
+  rename(mean = totinc) %>%
+  group_by(year) %>%
+  mutate(median = tinc[which(p==0.5)],
+         p = as.integer(lead(p)*100)) %>%
+  select(iso, year, p, sinc, mean, median) %>%
+  arrange(year)
+wealth_spain <- wealth_spain[complete.cases(wealth_spain),]
   
 # Transform bracket shares into shares of bottom percentile
-wealth_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(YEAR) {
-  wealth_spain %>% filter(year == YEAR) %>%
-    mutate(sinc = cumsum(sinc)) %>%
-    rename(botsh = sinc)
-  })
+wealth_spain %<>% group_by(year) %>%
+  mutate(sinc = cumsum(sinc)) %>%
+  rename(botsh = sinc)
 
 # Fill in missing percentiles for Spain
 missing_spain <- ldply(min(wealth_spain$year):max(wealth_spain$year), function(year) {
@@ -182,15 +185,18 @@ get_lorenz_curve <- function(ISO = "US", LAG=20) {
   
   # Get Lorenz curves from YEAR1 and YEAR2
   lorenz_now <- world_dist %>% 
-    filter(iso == ISO & year == YEAR1) %>% 
-    select(p, botsh) %>%
-    rename(botsh_now = botsh)
+    filter(iso == ISO & year == YEAR1) %>%
+    ungroup() %>%
+    rename(botsh_now = botsh, mean_now = mean, median_now = median) %>%
+    select(p, botsh_now, mean_now, median_now)
+
   lorenz_after <- world_dist %>% 
     filter(iso == ISO & year == YEAR2) %>% 
-    select(p, botsh) %>%
-    rename(botsh_after = botsh)
+    ungroup() %>%
+    rename(botsh_after = botsh, mean_after = mean, median_after = median) %>%
+    select(p, botsh_after, mean_after, median_after)
   
-  output <- inner_join(lorenz_now, lorenz_after, by = "p") %>%
+  output <- left_join(lorenz_now, lorenz_after, by = "p") %>%
     mutate(KY_now = KY_now,
            KY_after = KY_after,
            growth_before_penn = growth_before_penn,
