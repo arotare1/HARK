@@ -1,204 +1,162 @@
 '''
-Plots inequality measures for different growth factors and saves them in ./Figures/
+Plots inequality measures for different growth factors and saves them in ../output/Figures_model/
 
-Assumes that estimates of center and spread have already been computed and stored in ./ParamsEstimates/
+Assumes that estimates of center and spread have already been computed and stored in 
+../../output/BaselineEstimates/
 This is done by FindEstimates.py
 
-Assumes that the model has been solved and results stored in ./Results/
+Assumes that the model has been solved and results stored in ../../output/VaryGrowth/
 This is done by VaryGrowth.py
 '''
+
 import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
 import SetupParams as Params
-from cstwGrowth import getLorenzShares, getGini
+from cstwGrowth import getGiniPrc
 
-Params.do_param_dist = True    # Do param-dist version if True, param-point if False
-Params.do_lifecycle = False     # Use lifecycle model if True, perpetual youth if False
-which_estimation_growth = 1.0   # Pick estimates obtained under a specific growth factor 
-                                # 1.0 for Baseline, >1 for HighEstimationGrowth
-path_estimation_growth = 'Baseline/' if which_estimation_growth == 1 else 'HighEstimationGrowth/'
+Params.do_param_dist = False     # Do param-dist version if True, param-point if False
+do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
+estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
+                            # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
+                            # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
+
 
 # Update spec_name
-Params.spec_name = 'Dist' if Params.do_param_dist else 'Point'
-Params.spec_name += 'LC' if Params.do_lifecycle else 'PY'
+Params.spec_name = '/NoGrowth' if estimation_growth == 1 else '/HighGrowth'
+Params.spec_name += '/ActualKY' if do_actual_KY else '/BaselineKY' 
+Params.spec_name += '/Dist' if Params.do_param_dist else '/Point'
 
-# Load US wealth data
-lorenz_long_data = np.hstack((np.array(0.0),getLorenzShares(Params.SCF_wealth,weights=Params.SCF_weights,percentiles=np.arange(0.01,1.0,0.01).tolist()),np.array(1.0)))
-
-# Load estimates and growth factor used when finding the estimates
-with open('./ParamsEstimates/' + path_estimation_growth + Params.spec_name + '.pkl') as f:
-    center_estimate, spread_estimate, estimation_growth = pickle.load(f)
+# Load economy
+with open('../../output/BaselineEstimates' + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
+    Economy = pickle.load(f)
 
 # Load inequality stats
-with open('./Results/' + path_estimation_growth + Params.spec_name + '.pkl') as f:
+with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl') as f:
     annual_growthFactors,\
     growthFactors,\
     LorenzLongLvlSim,\
     LorenzLongNrmSim,\
+    LorenzLongIncSim,\
     aLvlGiniSim,\
     aNrmGiniSim,\
+    IncGiniSim,\
+    aLvlMeanSim,\
+    aNrmMeanSim,\
+    aLvlMedianSim,\
+    aNrmMedianSim,\
     aLvlMeanToMedianSim,\
     aNrmMeanToMedianSim,\
     aLvlPercentilesSim,\
     aNrmPercentilesSim = pickle.load(f)
 
-# Compute some useful wealth shares and percentile ratios (for wealth levels and wealth ratios)
-aLvlTop1share = [1-item[99] for item in LorenzLongLvlSim]
-aNrmTop1share = [1-item[99] for item in LorenzLongNrmSim]
 
-aLvlTop5share = [1-item[95] for item in LorenzLongLvlSim]
-aNrmTop5share = [1-item[95] for item in LorenzLongNrmSim]
+# Compute top wealth shares
+aLvl_top1_share = [1-item[99] for item in LorenzLongLvlSim]
+aNrm_top1_share = [1-item[99] for item in LorenzLongNrmSim]
 
-aLvlTop10share = [1-item[90] for item in LorenzLongLvlSim]
-aNrmTop10share = [1-item[90] for item in LorenzLongNrmSim]
+aLvl_top5_share = [1-item[95] for item in LorenzLongLvlSim]
+aNrm_top5_share = [1-item[95] for item in LorenzLongNrmSim]
 
-aLvl_99to50 = [item[98]/item[49] for item in aLvlPercentilesSim]
-aNrm_99to50 = [item[98]/item[49] for item in aNrmPercentilesSim]
+aLvl_top10_share = [1-item[90] for item in LorenzLongLvlSim]
+aNrm_top10_share = [1-item[90] for item in LorenzLongNrmSim]
 
-aLvl_95to50 = [item[94]/item[49] for item in aLvlPercentilesSim]
-aNrm_95to50 = [item[94]/item[49] for item in aNrmPercentilesSim]
+aLvl_bot40_share = [item[40] for item in LorenzLongLvlSim]
 
-aLvl_90to50 = [item[89]/item[49] for item in aLvlPercentilesSim]
-aNrm_90to50 = [item[89]/item[49] for item in aNrmPercentilesSim]
 
-aLvl_80to50 = [item[79]/item[49] for item in aLvlPercentilesSim]
-aNrm_80to50 = [item[79]/item[49] for item in aNrmPercentilesSim]
-
-aLvl_95to5 = [item[94]/item[4] for item in aLvlPercentilesSim]
-aNrm_95to5 = [item[94]/item[4] for item in aNrmPercentilesSim]
-
-aLvl_90to10 = [item[89]/item[9] for item in aLvlPercentilesSim]
-aNrm_90to10 = [item[89]/item[9] for item in aNrmPercentilesSim]
-
+# Compute absolute deviation from median
+# E.g. (avg wealth of top 5% - median)/median  or  (median - avg wealth of bottom 40%)/median
+aLvl_top1_to_median = []
+aLvl_top5_to_median = []
+aLvl_top10_to_median = []
+aLvl_bot40_to_median = []
+for i in range(len(aLvl_top1_share)):
+    mean = aLvlMeanSim[i]
+    median = aLvlMedianSim[i]
+    aLvl_top1_to_median.append((aLvl_top1_share[i]*mean/0.01 - median)/median)
+    aLvl_top5_to_median.append((aLvl_top5_share[i]*mean/0.05 - median)/median)
+    aLvl_top10_to_median.append((aLvl_top10_share[i]*mean/0.1 - median)/median)
+    aLvl_bot40_to_median.append((median - aLvl_bot40_share[i]*mean/0.4)/median)
     
-# Plot average Lorenz curve for wealth levels
-which_growth = np.where(growthFactors==estimation_growth)[0][0] # index of growth for which estimates were computed
-LorenzAxis = np.arange(101,dtype=float)
+    
+# Save stats on wealth levels to .csv    
+csvdict = {'annual_growth': annual_growthFactors,
+           'gini' : aLvlGiniSim,
+           'mean_to_median' : aLvlMeanToMedianSim,
+           'top1_share' : aLvl_top1_share,
+           'top5_share' : aLvl_top5_share,
+           'top10_share' : aLvl_top10_share,
+           'top1_to_median' : aLvl_top1_to_median,
+           'top5_to_median' : aLvl_top5_to_median,
+           'top10_to_median' : aLvl_top10_to_median,
+           'bot40_to_median' : aLvl_bot40_to_median}
+
+df = pd.DataFrame.from_dict(csvdict)
+df.to_csv('../../output/VaryGrowth/' + Params.spec_name + '.csv')
+    
+# Plot Gini coefficient
 fig = plt.figure()
-plt.plot(LorenzAxis, lorenz_long_data, '-k', linewidth=1.5, label='data')
-plt.plot(LorenzAxis, LorenzLongLvlSim[which_growth], '--',
-         label='g=' + str(annual_growthFactors[which_growth]))
-plt.xlabel('Wealth percentile',fontsize=12)
-plt.ylabel('Cumulative wealth share',fontsize=12)
-plt.ylim([-0.02,1.0])
-plt.legend(loc='upper left')
-plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'Lorenz_' + Params.spec_name + '.pdf')
-
-
-# Plot Gini for wealth levels
-aLvlGini = [getGini(item) for item in LorenzLongLvlSim]   # Gini coefficient of average Lorenz curve
-fig = plt.figure()
-plt.plot(annual_growthFactors, aLvlGiniSim, '-bo', label='avg(gini)')
-plt.plot(annual_growthFactors, aLvlGini, '-ro', label='gini(avg)')
-plt.axvline(x=estimation_growth**4)
-plt.title('Gini coefficient for wealth levels')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Gini coefficient',fontsize=12)
-plt.legend(loc='lower right')
-plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'Gini_Lvl_' + Params.spec_name + '.pdf')
-
-
-# Plot Gini for wealth-to-income ratios
-aNrmGini = [getGini(item) for item in LorenzLongNrmSim]   # Gini coefficient of average Lorenz curve
-fig = plt.figure()
-plt.plot(annual_growthFactors, aNrmGiniSim, '-bo', label='avg(gini)')
-plt.plot(annual_growthFactors, aNrmGini, '-ro', label='gini(avg)')
-plt.axvline(x=estimation_growth**4)
-plt.title('Gini coefficient for wealth-to-income ratios')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Gini coefficient',fontsize=12)
+plt.plot(annual_growthFactors, aLvlGiniSim, '-ro', label='wealth levels')
+plt.plot(annual_growthFactors, aNrmGiniSim, '-go', label='wealth ratios')
+plt.plot(annual_growthFactors, IncGiniSim, '-bo', label='income')
+plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
+plt.xlabel('Annual growth')
+plt.title('Gini coefficient')
 plt.legend(loc='upper right')
 plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'Gini_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('../../output/Figures_model' + Params.spec_name + '_gini.pdf')
 
 
-# Plot mean-to-median ratio for wealth levels
+# Plot mean-to-median ratio
 fig = plt.figure()
-plt.plot(annual_growthFactors, aLvlMeanToMedianSim, '-bo')
-plt.axvline(x=estimation_growth**4)
-plt.title('Mean-to-median ratio for wealth levels')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Mean-to-median ratio',fontsize=12)
-plt.legend(loc='lower right')
-plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'MeanToMedian_Lvl_' + Params.spec_name + '.pdf')
-
-
-# Plot mean-to-median ratio for wealth-to-income ratios
-fig = plt.figure()
-plt.plot(annual_growthFactors, aNrmMeanToMedianSim, '-bo')
-plt.axvline(x=estimation_growth**4)
-plt.title('Mean-to-median ratio for wealth-to-income ratios')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Mean-to-median ratio',fontsize=12)
-plt.legend(loc='lower right')
-plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'MeanToMedian_Nrm_' + Params.spec_name + '.pdf')
-
-
-# Plot wealth shares of different percentiles of the wealth level distribution
-fig = plt.figure()
-plt.plot(annual_growthFactors, aLvlTop1share, '-bo', label='top 1%')
-plt.plot(annual_growthFactors, aLvlTop5share, '-ro', label='top 5%')
-plt.plot(annual_growthFactors, aLvlTop10share, '-go', label='top 10%')
-plt.axvline(x=estimation_growth**4)
-plt.title('Wealth level shares')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Wealth share',fontsize=12)
-plt.legend(loc='lower right')
-plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'Top_Lvl_' + Params.spec_name + '.pdf')
-
-
-# Plot wealth shares of different percentiles of the wealth-to-income ratio distribution
-fig = plt.figure()
-plt.plot(annual_growthFactors, aNrmTop1share, '-bo', label='top 1%')
-plt.plot(annual_growthFactors, aNrmTop5share, '-ro', label='top 5%')
-plt.plot(annual_growthFactors, aNrmTop10share, '-go', label='top 10%')
-plt.axvline(x=estimation_growth**4)
-plt.title('Wealth-to-income ratio shares')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Wealth share',fontsize=12)
+plt.plot(annual_growthFactors, aLvlMeanToMedianSim, '-ro', label='wealth levels')
+plt.plot(annual_growthFactors, aNrmMeanToMedianSim, '-go', label='wealth ratios')
+plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
+plt.xlabel('Annual growth')
+plt.title('Mean to median ratio')
 plt.legend(loc='upper right')
 plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'Top_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('../../output/Figures_model' + Params.spec_name + '_mean_to_median.pdf')
 
 
-# Plot percentile ratios for wealth levels
+# Plot top wealth shares (levels)
 fig = plt.figure()
-plt.plot(annual_growthFactors, aLvl_99to50, '-bo', label='99/50')
-plt.plot(annual_growthFactors, aLvl_95to50, '-ro', label='95/50')
-plt.plot(annual_growthFactors, aLvl_90to50, '-go', label='90/50')
-plt.plot(annual_growthFactors, aLvl_95to5, '-yo', label='95/5')
-plt.plot(annual_growthFactors, aLvl_90to10, '-ko', label='90/10')
-plt.plot(annual_growthFactors, aLvl_80to50, '-mo', label='80/50')
-plt.axvline(x=estimation_growth**4)
-plt.title('Wealth levels percentile ratios')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Ratio',fontsize=12)
-plt.legend(loc='upper left')
-plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'PrcRatios_Lvl_' + Params.spec_name + '.pdf')
-
-
-# Plot percentile ratios for wealth-to-income ratios
-fig = plt.figure()
-plt.plot(annual_growthFactors, aNrm_99to50, '-bo', label='99/50')
-plt.plot(annual_growthFactors, aNrm_95to50, '-ro', label='95/50')
-plt.plot(annual_growthFactors, aNrm_90to50, '-go', label='90/50')
-plt.plot(annual_growthFactors, aNrm_95to5, '-yo', label='95/5')
-plt.plot(annual_growthFactors, aNrm_90to10, '-ko', label='90/10')
-plt.plot(annual_growthFactors, aNrm_80to50, '-mo', label='80/50')
-plt.axvline(x=estimation_growth**4)
-plt.title('Wealth-to-income percentile ratios')
-plt.xlabel('Growth factor',fontsize=12)
-plt.ylabel('Ratio',fontsize=12)
+plt.plot(annual_growthFactors, aLvl_top1_share, '-ro', label='top 1%')
+plt.plot(annual_growthFactors, aLvl_top5_share, '-go', label='top 5%')
+plt.plot(annual_growthFactors, aLvl_top10_share, '-bo', label='top 10%')
+plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
+plt.title('Top wealth shares (levels)')
+plt.xlabel('Annual growth')
 plt.legend(loc='upper right')
 plt.show()
-fig.savefig('./Figures/' + path_estimation_growth + 'PrcRatios_Nrm_' + Params.spec_name + '.pdf')
+fig.savefig('../../output/Figures_model' + Params.spec_name + '_top_shares_levels.pdf')
+
+
+# Plot top wealth shares (ratios)
+fig = plt.figure()
+plt.plot(annual_growthFactors, aNrm_top1_share, '-ro', label='top 1%')
+plt.plot(annual_growthFactors, aNrm_top5_share, '-go', label='top 5%')
+plt.plot(annual_growthFactors, aNrm_top10_share, '-bo', label='top 10%')
+plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
+plt.title('Top wealth shares (ratios)')
+plt.xlabel('Annual growth')
+plt.legend(loc='upper right')
+plt.show()
+fig.savefig('../../output/Figures_model' + Params.spec_name + '_top_shares_ratios.pdf')
+
+
+# Plot absolute deviations from median
+fig = plt.figure()
+plt.plot(annual_growthFactors, aLvl_top1_to_median, '-ro', label='top 1%')
+plt.plot(annual_growthFactors, aLvl_top5_to_median, '-go', label='top 5%')
+plt.plot(annual_growthFactors, aLvl_top10_to_median, '-bo', label='top 10%')
+plt.plot(annual_growthFactors, aLvl_bot40_to_median, '-yo', label='bottom 40%')
+plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
+plt.title('Average wealth relative to median')
+plt.xlabel('Annual growth')
+plt.legend(loc='upper right')
+plt.show()
+fig.savefig('../../output/Figures_model' + Params.spec_name + '_dev_from_median.pdf')
 
