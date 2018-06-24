@@ -19,7 +19,7 @@ library(reshape2)
 library(gridExtra)
 
 
-setwd("/Users/andreea/Documents/phd/2ndyrpaper/output/Figures")
+setwd("/Users/andreea/Documents/phd/2ndyrpaper/output/Figures_data")
 
 # Import combined wealth inequality data
 wealth <- read.csv("../CountryWealth/WealthData_combined.csv")
