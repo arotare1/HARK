@@ -18,8 +18,9 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, findLorenzDistanceAtTargetKY, getKYratioDifference
 
 
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
-do_actual_KY = False            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
+do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
@@ -28,7 +29,12 @@ pdb.set_trace()
 
 # Update spec_name
 Params.spec_name = '/NoGrowth' if estimation_growth == 1 else '/HighGrowth'
-Params.spec_name += '/ActualKY' if do_actual_KY else '/BaselineKY' 
+if do_actual_KY and not do_low_T_age:
+    Params.spec_name += '/actual_KY'
+if do_low_T_age and not do_actual_KY:
+    Params.spec_name += '/low_T_age'
+if do_low_T_age and do_actual_KY:
+    Params.spec_name += '/low_T_age_actual_KY'
 Params.spec_name += '/Dist' if Params.do_param_dist else '/Point'
 
 # Set number of beta types
@@ -50,6 +56,8 @@ else:
 # Make AgentTypes for estimation
 PerpetualYouthType = cstwMPCagent(**Params.init_infinite)
 PerpetualYouthType.PermGroFac = [estimation_growth]     # Update growth factor
+if do_low_T_age:
+    PerpetualYouthType.T_age = 200
 PerpetualYouthType.AgeDstn = np.array(1.0)
 EstimationAgentList = []
 for n in range(Params.pref_type_count):
@@ -132,8 +140,8 @@ LorenzAxis = np.arange(101,dtype=float)
 fig = plt.figure()
 plt.plot(LorenzAxis, EstimationEconomy.LorenzData, '-k', linewidth=1.5, label = 'data')
 plt.plot(LorenzAxis, EstimationEconomy.LorenzLongLvlSim, '--', label = 'model')
-plt.xlabel('Wealth percentile',fontsize=12)
-plt.ylabel('Cumulative wealth share',fontsize=12)
+plt.xlabel('Wealth percentile')
+plt.ylabel('Cumulative wealth share')
 plt.ylim([-0.04,1.0])
 plt.legend(loc='upper left')
 plt.show()
