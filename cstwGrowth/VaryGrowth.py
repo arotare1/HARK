@@ -86,7 +86,7 @@ for i in range(len(growthFactors)):
 
     
     
-# Save growth factors and corresponding results as .pkl and .csv
+# Save growth factors and corresponding results
 with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl', 'w') as f:
     pickle.dump([annual_growthFactors,
                  growthFactors,
@@ -105,14 +105,3 @@ with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl', 'w') as f:
                  aLvlPercentilesSim,
                  aNrmPercentilesSim], f)
 
-csvdict = {'annual_growthFactors': annual_growthFactors,
-           'growthFactors' : growthFactors,
-           'aLvlGiniSim' : aLvlGiniSim,
-           'aNrmGiniSim' : aNrmGiniSim,
-           'IncGiniSim' : IncGiniSim,
-           'aLvlMeanToMedianSim' : aLvlMeanToMedianSim,
-           'aNrmMeanToMedianSim' : aNrmMeanToMedianSim}
-
-df = pd.DataFrame.from_dict(csvdict)
-df.to_csv('../../output/VaryGrowth/' + Params.spec_name + '.csv')
-    
