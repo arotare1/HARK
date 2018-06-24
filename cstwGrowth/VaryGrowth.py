@@ -17,8 +17,8 @@ import SetupParams as Params
 from cstwGrowth import getGiniPrc
 
 Params.do_param_dist = False     # Do param-dist version if True, param-point if False
-do_actual_KY = False            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
-estimation_growth = 1.0     # Set growth rate to be used when estimating parameters 
+do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
+estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
 
@@ -84,8 +84,7 @@ for i in range(len(growthFactors)):
     
     print('Solving took ' + str(t_end-t_start) + ' seconds.\n')
 
-    
-    
+
 # Save growth factors and corresponding results
 with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl', 'w') as f:
     pickle.dump([annual_growthFactors,
