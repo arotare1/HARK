@@ -43,6 +43,10 @@ LorenzLongIncSim = []
 aLvlGiniSim = []
 aNrmGiniSim = []
 IncGiniSim = []
+aLvlMeanSim = []
+aNrmMeanSim = []
+aLvlMedianSim = []
+aNrmMedianSim = []
 aLvlMeanToMedianSim = []
 aNrmMeanToMedianSim = []
 aLvlPercentilesSim = []
@@ -69,6 +73,10 @@ for i in range(len(growthFactors)):
     aLvlGiniSim.append(getGiniPrc(NewEconomy.LorenzLongLvlSim))
     aNrmGiniSim.append(getGiniPrc(NewEconomy.LorenzLongNrmSim))
     IncGiniSim.append(getGiniPrc(NewEconomy.LorenzLongIncSim))
+    aLvlMeanSim.append(NewEconomy.aLvlMeanSim)
+    aNrmMeanSim.append(NewEconomy.aNrmMeanSim)
+    aLvlMedianSim.append(NewEconomy.aLvlMedianSim)
+    aNrmMedianSim.append(NewEconomy.aNrmMedianSim)
     aLvlMeanToMedianSim.append(NewEconomy.aLvlMeanSim / NewEconomy.aLvlMedianSim)
     aNrmMeanToMedianSim.append(NewEconomy.aNrmMeanSim / NewEconomy.aNrmMedianSim)
     aLvlPercentilesSim.append(NewEconomy.aLvlPercentilesSim)
@@ -88,6 +96,10 @@ with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl', 'w') as f:
                  aLvlGiniSim,
                  aNrmGiniSim,
                  IncGiniSim,
+                 aLvlMeanSim,
+                 aNrmMeanSim,
+                 aLvlMedianSim,
+                 aNrmMedianSim,
                  aLvlMeanToMedianSim,
                  aNrmMeanToMedianSim,
                  aLvlPercentilesSim,
