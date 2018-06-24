@@ -7,7 +7,7 @@ from copy import  deepcopy
 import os
 
 # Choose percentiles of the data to match and which estimation to run
-spec_name = None              # To be updated in main code
+spec_name = ''                # To be updated in main code
 param_name = 'DiscFac'        # Which parameter to introduce heterogeneity in
 dist_type = 'uniform'         # Which type of distribution to use
 do_lifecycle = False          # Use lifecycle model if True, perpetual youth if False
