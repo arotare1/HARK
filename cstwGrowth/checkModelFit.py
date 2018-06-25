@@ -87,9 +87,9 @@ for country in country_list:
     idx = ~np.isnan(EconomyAfter.LorenzData)
     fig = plt.figure()
     plt.plot(LorenzAxis[idx], EconomyNow.LorenzData[idx], linestyle = '-', linewidth = 0.75,
-             color = 'grey', label = str(after) + ' data')
+             color = 'grey', label = str(now) + ' data')
     plt.plot(LorenzAxis[idx], EconomyAfter.LorenzData[idx], linestyle = '-', linewidth = 0.75, 
-             color = 'salmon', label=str(now) + ' data')
+             color = 'salmon', label = str(after) + ' data')
     plt.plot(LorenzAxis, EconomyNow.LorenzLongLvlSim, linestyle = '--', linewidth = 1, color = 'black',
              label = str(now) + ' model')
     plt.plot(LorenzAxis, EconomyAfter.LorenzLongLvlSim, linestyle = '--', linewidth = 1, color = 'red', 
@@ -167,8 +167,8 @@ for country in country_list:
     bot40_to_median_after_data = 1 - bot40_share_after_data * mean_after_data / 0.4 / median_after_data
     
     # Load annual growth
-    annual_rate_before = (pd.read_csv(path_to_lorenz)['growth_before_wb'].values[0]-1)*100
-    annual_rate_after = (pd.read_csv(path_to_lorenz)['growth_after_wb'].values[0]-1)*100
+    annual_growth_before = pd.read_csv(path_to_lorenz)['growth_before_wb'].values[0]-1
+    annual_growth_after = pd.read_csv(path_to_lorenz)['growth_after_wb'].values[0]-1
     
     # Make .csv with comparison now vs. after for model and data
     csvdict = {'iso' : [country] * 3,
@@ -177,9 +177,9 @@ for country in country_list:
                'year' : [int(now), int(after), np.nan],
                'KY_diff' : [EconomyNow.KYratioDiff, EconomyAfter.KYratioDiff, np.nan],
                'Lorenz_dist' : [EconomyNow.LorenzDistance, EconomyAfter.LorenzDistance, np.nan],
-               'annual_growth' : [annual_rate_before,
-                                  annual_rate_after,
-                                  (annual_rate_after/annual_rate_before-1)*100],
+               'annual_growth' : [annual_growth_before,
+                                  annual_growth_after,
+                                  (annual_growth_after/annual_growth_before-1)*100],
                                   
                 'gini_data' : [gini_now_data,
                                gini_after_data,
