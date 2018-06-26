@@ -193,3 +193,4 @@ ggsave("model_vs_data_no_growth.pdf", plot = model_vs_data_no_growth,
        device = "pdf", width = 8, height = 8)
 ggsave("../../tex/model_vs_data_no_growth.pdf", plot = model_vs_data_no_growth, 
        device = "pdf", width = 8, height = 8)
+
