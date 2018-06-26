@@ -17,9 +17,10 @@ from copy import copy, deepcopy
 import pandas as pd
 import SetupParams as Params
 from cstwGrowth import getGiniPrc
+
                         
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-horizon = '20'      # Set interval over which we analyze changes in the wealth distribution
+horizon = '25'      # Set interval over which we analyze changes in the wealth distribution
                     # Can be 20, 25, 30
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
@@ -114,7 +115,7 @@ for country in country_list:
     plt.legend(loc='upper left')
     plt.show()
     fig.savefig('../../output/ModelFit/' + country + Params.spec_name + '.pdf')
-    fig.savefig('../../tex/model_fit_' + country + '.pdf')
+    fig.savefig('../../tex/model_fit_' + country + '_' + horizon + '.pdf')
     
     # Compute gini coefficient now and after for model and data
     gini_now_model = getGiniPrc(EconomyNow.LorenzLongLvlSim[idx])
@@ -182,8 +183,8 @@ for country in country_list:
     bot40_to_median_after_data = 1 - bot40_share_after_data * mean_after_data / 0.4 / median_after_data
     
     # Load annual growth
-    annual_growth_before = pd.read_csv(path_to_lorenz)['growth_before_wb'].values[0]-1
-    annual_growth_after = pd.read_csv(path_to_lorenz)['growth_after_wb'].values[0]-1
+    annual_growth_before = (pd.read_csv(path_to_lorenz)['growth_before_wb'].values[0]-1)*100
+    annual_growth_after = (pd.read_csv(path_to_lorenz)['growth_after_wb'].values[0]-1)*100
     
     # Make .csv with comparison now vs. after for model and data
     csvdict = {'iso' : [country] * 3,
@@ -246,6 +247,7 @@ for country in country_list:
 
     df = pd.DataFrame.from_dict(csvdict)
     df.to_csv('../../output/ModelFit/' + country + Params.spec_name + '.csv', float_format='%.3f')
+    df.to_csv('../../tex/model_fit_' + country + '_' + horizon + '.csv', float_format='%.3f')
     
     # Save some info
     with open('../../output/ModelFit/' + country + Params.spec_name + '.txt','w') as f:
