@@ -51,7 +51,20 @@ country_list = ['ES', 'FR', 'GB', 'US']
 #country_list = ['ES']
 
 for country in country_list:      
-    print('Now solving economy of ' + country + '\n')       
+    print('Now solving economy of ' + country + '\n')    
+    
+    # Make country label for plot title    
+    if country=='FR':
+        label = '(a) France'
+    
+    if country=='ES':
+        label = '(b) Spain'
+        
+    if country=='GB':
+        label = '(c) United Kingdom'
+        
+    if country=='US':
+        label = '(d) United States'
     
     # Load estimation economy
     with open('../../output/CountryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
@@ -96,10 +109,12 @@ for country in country_list:
              label = str(after) + ' model')
     plt.xlabel('Wealth percentile')
     plt.ylabel('Cumulative wealth share')
+    plt.title(label)
     plt.ylim([-0.04,1.0])
     plt.legend(loc='upper left')
     plt.show()
     fig.savefig('../../output/ModelFit/' + country + Params.spec_name + '.pdf')
+    fig.savefig('../../tex/model_fit_' + country + '.pdf')
     
     # Compute gini coefficient now and after for model and data
     gini_now_model = getGiniPrc(EconomyNow.LorenzLongLvlSim[idx])
