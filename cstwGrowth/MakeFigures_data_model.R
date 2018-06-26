@@ -1,7 +1,7 @@
 # =============================================================================================== #
 # Make figures comparing data and model
 #
-# Saves output in ../../output/Figures_data/ and ../../tex/
+# Saves output in ../../output/Figures_data_model/ and ../../tex/
 # =============================================================================================== #
 
 library(plyr)
