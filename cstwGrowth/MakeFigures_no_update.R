@@ -41,7 +41,8 @@ panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_mean_to_median" |
   geom_line() +
   geom_point() +
   scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
-                       labels = c("update", "no update")) +
+                       labels = c("update behavior with growth",
+                                  "don't update behavior with growth")) +
   labs(x = "Growth rate", y = "Mean to median ratio", title = "(a) Wealth levels", color = "") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),

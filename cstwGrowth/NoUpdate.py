@@ -19,7 +19,7 @@ from cstwGrowth import getGiniPrc
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
-estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
+estimation_growth = 1.0     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
                             
