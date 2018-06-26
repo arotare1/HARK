@@ -19,7 +19,7 @@ from cstwGrowth import getGiniPrc
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
-estimation_growth = 1.0     # Set growth rate to be used when estimating parameters 
+estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
                             
@@ -59,12 +59,16 @@ with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl') as f:
 
 # For selected inequality measures, pick just the ones corresponding to T_age used in estiamtion
 aLvlMeanToMedianSim = np.array(aLvlMeanToMedianSim)[np.array(T_ageSim)==Economy.agents[0].T_age]
+aNrmMeanToMedianSim = np.array(aNrmMeanToMedianSim)[np.array(T_ageSim)==Economy.agents[0].T_age]
 aLvlGiniSim = np.array(aLvlGiniSim)[np.array(T_ageSim)==Economy.agents[0].T_age]
+aNrmGiniSim = np.array(aNrmGiniSim)[np.array(T_ageSim)==Economy.agents[0].T_age]
 annual_growthFactors = np.array(annual_growthFactors)[np.array(T_ageSim)==Economy.agents[0].T_age]
 growthFactors = np.array(growthFactors)[np.array(T_ageSim)==Economy.agents[0].T_age]
 
 aLvlMeanToMedianSim_NoUpdate = []
+aNrmMeanToMedianSim_NoUpdate = []
 aLvlGiniSim_NoUpdate = []
+aNrmGiniSim_NoUpdate = []
 
 for i in range(len(growthFactors)):
     annual_g = annual_growthFactors[i]
@@ -82,16 +86,22 @@ for i in range(len(growthFactors)):
     t_end = clock()
     
     aLvlMeanToMedianSim_NoUpdate.append(NoUpdateEconomy.aLvlMeanSim / NoUpdateEconomy.aLvlMedianSim)
+    aNrmMeanToMedianSim_NoUpdate.append(NoUpdateEconomy.aNrmMeanSim / NoUpdateEconomy.aNrmMedianSim)
     aLvlGiniSim_NoUpdate.append(getGiniPrc(NoUpdateEconomy.LorenzLongLvlSim))
+    aNrmGiniSim_NoUpdate.append(getGiniPrc(NoUpdateEconomy.LorenzLongNrmSim))
     
     print('Simulation took ' + str(t_end-t_start) + ' seconds.\n')
     
 # Save inequality measures as .csv
 csvdict = {'annual_growth': annual_growthFactors,
-           'gini' : aLvlGiniSim,
-           'gini_no_update' : aLvlGiniSim_NoUpdate,
-           'mean_to_median' : aLvlMeanToMedianSim,
-           'mean_to_median_no_update' : aLvlMeanToMedianSim_NoUpdate}
+           'Lvl_gini' : aLvlGiniSim,
+           'Lvl_gini_no_update' : aLvlGiniSim_NoUpdate,
+           'Lvl_mean_to_median' : aLvlMeanToMedianSim,
+           'Lvl_mean_to_median_no_update' : aLvlMeanToMedianSim_NoUpdate,
+           'Nrm_gini' : aNrmGiniSim,
+           'Nrm_gini_no_update' : aNrmGiniSim_NoUpdate,
+           'Nrm_mean_to_median' : aNrmMeanToMedianSim,
+           'Nrm_mean_to_median_no_update' : aNrmMeanToMedianSim_NoUpdate}
 
 df = pd.DataFrame.from_dict(csvdict)
 df.to_csv('../../output/NoUpdate/' + Params.spec_name + '.csv')
