@@ -40,7 +40,7 @@ with open('../../output/BaselineEstimates' + Params.spec_name + '_EstimationEcon
 
 
 # Solve the model for different growth factors and save results
-annual_growthFactors = np.arange(1.0, 1.07, 0.01)
+annual_growthFactors = np.arange(1.0, 1.1, 0.01)
 growthFactors = np.power(annual_growthFactors, 0.25)
 T_ageSim = []
 LorenzLongLvlSim = []
