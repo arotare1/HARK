@@ -35,6 +35,10 @@ no_growth <- read.csv("../NoUpdate/NoGrowth/low_T_age_actual_KY/Dist.csv")
 high_growth <- melt(high_growth, id.vars = "annual_growth")
 no_growth <- melt(no_growth, id.vars = "annual_growth")
 
+#----------------------------------------#
+# Plot mean to median ratio
+#----------------------------------------#
+
 panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_mean_to_median" |
                                            variable=="Lvl_mean_to_median_no_update"),
                   aes(x = annual_growth-1, y = value, color = variable)) +
@@ -59,10 +63,48 @@ panel_b <- ggplot(high_growth %>% filter(variable=="Nrm_mean_to_median" |
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
 
-update_vs_no_update <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                                panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                                nrow = 1),
-                                    g_legend(panel_a), nrow = 2, heights = c(10,1))
-ggsave("update_vs_no_update.pdf", plot = update_vs_no_update, device = "pdf", width = 8, height = 4)
-ggsave("../../tex/update_vs_no_update.pdf", plot = update_vs_no_update, device = "pdf", width = 8, height = 4)
+m2m_no_update <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+                                          panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+                                          nrow = 1),
+                              g_legend(panel_a), nrow = 2, heights = c(10,1))
+ggsave("m2m_no_update.pdf", plot = m2m_no_update, device = "pdf", width = 8, height = 4)
+ggsave("../../tex/m2m_no_update.pdf", plot = m2m_no_update, device = "pdf", width = 8, height = 4)
 
+
+#----------------------------------------#
+# Plot Gini coeffcient
+#----------------------------------------#
+
+panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_gini" |
+                                           variable=="Lvl_gini_no_update"),
+                  aes(x = annual_growth-1, y = value, color = variable)) +
+  geom_line() +
+  geom_point() +
+  scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
+                       labels = c("update behavior with growth",
+                                  "don't update behavior with growth")) +
+  labs(x = "Growth rate", y = "Gini coefficient", title = "(a) Wealth levels", color = "") +
+  theme_light() + 
+  theme(plot.title = element_text(hjust = 0.5, size = 10),
+        axis.title = element_text(size = 9),
+        legend.position = "bottom")
+
+panel_b <- ggplot(high_growth %>% filter(variable=="Nrm_gini" |
+                                           variable=="Nrm_gini_no_update"),
+                  aes(x = annual_growth-1, y = value, color = variable)) +
+  geom_line() +
+  geom_point() +
+  scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
+                       labels = c("update behavior with growth",
+                                  "don't update behavior with growth")) +
+  labs(x = "Growth rate", y = "Gini coefficient", title = "(b) Wealth to income ratios", color = "") +
+  theme_light() + 
+  theme(plot.title = element_text(hjust = 0.5, size = 10),
+        axis.title = element_text(size = 9))
+
+gini_no_update <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+                                          panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+                                          nrow = 1),
+                              g_legend(panel_a), nrow = 2, heights = c(10,1))
+ggsave("gini_no_update.pdf", plot = gini_no_update, device = "pdf", width = 8, height = 4)
+ggsave("../../tex/gini_no_update.pdf", plot = gini_no_update, device = "pdf", width = 8, height = 4)
