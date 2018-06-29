@@ -20,10 +20,10 @@ from cstwGrowth import getGiniPrc
 
                         
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-horizon = '25'      # Set interval over which we analyze changes in the wealth distribution
+horizon = '20'      # Set interval over which we analyze changes in the wealth distribution
                     # Can be 20, 25, 30
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
-do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
+do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
 do_high_CRRA = False     # Set CRRA coefficient to be 2.0 instead of 1 if True
@@ -196,6 +196,7 @@ for country in country_list:
                'annual_growth' : [annual_growth_before,
                                   annual_growth_after,
                                   (annual_growth_after/annual_growth_before-1)*100],
+                'T_age' : [EconomyNow.agents[0].T_age] * 3,
                                   
                 'gini_data' : [gini_now_data,
                                gini_after_data,
@@ -212,6 +213,38 @@ for country in country_list:
                 'mean_to_median_model' : [mean_to_median_now_model,
                                           mean_to_median_after_model,
                                           (mean_to_median_after_model/mean_to_median_now_model-1)*100],
+                                
+                'top1_share_data' : [top1_share_now_data,
+                                     top1_share_after_data,
+                                     (top1_share_after_data/top1_share_now_data-1)*100],
+                                     
+                'top1_share_model' : [top1_share_now_model,
+                                     top1_share_after_model,
+                                     (top1_share_after_model/top1_share_now_model-1)*100],
+                                      
+                'top5_share_data' : [top5_share_now_data,
+                                     top5_share_after_data,
+                                     (top5_share_after_data/top5_share_now_data-1)*100],
+                                     
+                'top5_share_model' : [top5_share_now_model,
+                                     top5_share_after_model,
+                                     (top5_share_after_model/top5_share_now_model-1)*100],
+                                      
+                'top10_share_data' : [top10_share_now_data,
+                                     top10_share_after_data,
+                                     (top10_share_after_data/top10_share_now_data-1)*100],
+                                      
+                'top10_share_model' : [top10_share_now_model,
+                                     top10_share_after_model,
+                                     (top10_share_after_model/top10_share_now_model-1)*100],
+                                      
+                'bot40_share_data' : [bot40_share_now_data,
+                                     bot40_share_after_data,
+                                     (bot40_share_after_data/bot40_share_now_data-1)*100],
+                                      
+                'bot40_share_model' : [bot40_share_now_model,
+                                     bot40_share_after_model,
+                                     (bot40_share_after_model/bot40_share_now_model-1)*100],
                                           
                 'top1_to_median_data' : [top1_to_median_now_data,
                                          top1_to_median_after_data,

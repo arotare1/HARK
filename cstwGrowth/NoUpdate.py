@@ -17,9 +17,9 @@ import SetupParams as Params
 from cstwGrowth import getGiniPrc
 
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
-do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
-estimation_growth = 1.0     # Set growth rate to be used when estimating parameters 
+do_actual_KY = False            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
+do_low_T_age = False      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
+estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
                             
@@ -28,9 +28,9 @@ Params.spec_name = '/NoGrowth' if estimation_growth == 1 else '/HighGrowth'
 if do_actual_KY and not do_low_T_age:
     Params.spec_name += '/actual_KY'
 if do_low_T_age and not do_actual_KY:
-    Params.spec_name += '/low_T_age'
+    Params.spec_name += '/lower_T_age'
 if do_low_T_age and do_actual_KY:
-    Params.spec_name += '/low_T_age_actual_KY'
+    Params.spec_name += '/lower_T_age_actual_KY'
 Params.spec_name += '/Dist' if Params.do_param_dist else '/Point'
 
 # Load economy where agents update

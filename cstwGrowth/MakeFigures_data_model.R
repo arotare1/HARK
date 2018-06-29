@@ -30,13 +30,13 @@ g_legend<-function(a.gplot){
 wealth <- read.csv("../CountryWealth/WealthData_combined.csv")
 
 # Import model simulation results
-model_high_growth <- read.csv("../VaryGrowth/HighGrowth/low_T_age_actual_KY/Dist.csv")
-model_no_growth <- read.csv("../VaryGrowth/NoGrowth/low_T_age_actual_KY/Dist.csv")
+model_high_growth <- read.csv("../VaryGrowth/HighGrowth/Dist.csv")
+model_no_growth <- read.csv("../VaryGrowth/NoGrowth/Dist.csv")
 model_high_growth$T_age <- as.factor(model_high_growth$T_age)
 model_no_growth$T_age <- as.factor(model_no_growth$T_age)
 
 # ------------------------------------------------------------------------------------ #
-# Make figure for high estimation growth (1.015^0.25)
+# Make figure for high estimation growth (1.015)
 # ------------------------------------------------------------------------------------ #
 
 panel_a <- ggplot() +
@@ -48,8 +48,12 @@ panel_a <- ggplot() +
             aes(x = annual_growth-1, y = mean_to_median, color = T_age)) +
   geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
              aes(x = growth_last20-1, y = mean_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = mean_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy",
-                     labels = c("64 years","74 years","124 years","Data")) +
+                     labels = c("64 years","74 years","124 years","OECD WDD")) +
   labs(x = "Growth rate", y = "Inequality", title = "(a) Mean to median ratio",
        color = "Terminal age:") +
   guides(color=guide_legend(override.aes=list(shape=c(NA,NA,NA,16),linetype=c(1,1,1,0)))) +
@@ -60,15 +64,19 @@ panel_a <- ggplot() +
 
 panel_b <- ggplot() +
   geom_line(data = model_high_growth %>% filter(T_age==160 & annual_growth<=1.05),
-            aes(x = annual_growth-1, y = gini, color = T_age)) +
+            aes(x = annual_growth-1, y = top1_to_median, color = T_age)) +
   geom_line(data = model_high_growth %>% filter(T_age==200 & annual_growth<=1.05),
-            aes(x = annual_growth-1, y = gini, color = T_age)) +
+            aes(x = annual_growth-1, y = top1_to_median, color = T_age)) +
   geom_line(data = model_high_growth %>% filter(T_age==400 & annual_growth<=1.05),
-            aes(x = annual_growth-1, y = gini, color = T_age)) +
-  geom_point(data = wealth %>% filter(source=="OECD/Eurostat ICW" & iso!="CN"),
-             aes(x = growth_last20-1, y = gini, color = source)) +
+            aes(x = annual_growth-1, y = top1_to_median, color = T_age)) +
+  geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+             aes(x = growth_last20-1, y = top1_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = top1_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy") +
-  labs(x = "Growth rate", y = "Inequality", title = "(b) Gini coefficient") +
+  labs(x = "Growth rate", y = "Inequality", title = "(b) Top 1% relative to median") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
@@ -82,6 +90,10 @@ panel_c <- ggplot() +
             aes(x = annual_growth-1, y = top5_to_median, color = T_age)) +
   geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
              aes(x = growth_last20-1, y = top5_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = top5_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy") +
   labs(x = "Growth rate", y = "Inequality", title = "(c) Top 5% relative to median") +
   theme_light() + 
@@ -97,6 +109,10 @@ panel_d <- ggplot() +
             aes(x = annual_growth-1, y = top10_to_median, color = T_age)) +
   geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
              aes(x = growth_last20-1, y = top10_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = top10_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy") +
   labs(x = "Growth rate", y = "Inequality", title = "(d) Top 10% relative to median") +
   theme_light() + 
@@ -128,8 +144,12 @@ panel_a <- ggplot() +
             aes(x = annual_growth-1, y = mean_to_median, color = T_age)) +
   geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
              aes(x = growth_last20-1, y = mean_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = mean_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy",
-                     labels = c("64 years","74 years","124 years","Data")) +
+                     labels = c("64 years","74 years","124 years","OECD WDD")) +
   labs(x = "Growth rate", y = "Inequality", title = "(a) Mean to median ratio",
        color = "Terminal age:") +
   guides(color=guide_legend(override.aes=list(shape=c(NA,NA,NA,16),linetype=c(1,1,1,0)))) +
@@ -140,15 +160,19 @@ panel_a <- ggplot() +
 
 panel_b <- ggplot() +
   geom_line(data = model_no_growth %>% filter(T_age==160 & annual_growth<=1.05),
-            aes(x = annual_growth-1, y = gini, color = T_age)) +
+            aes(x = annual_growth-1, y = top1_to_median, color = T_age)) +
   geom_line(data = model_no_growth %>% filter(T_age==200 & annual_growth<=1.05),
-            aes(x = annual_growth-1, y = gini, color = T_age)) +
+            aes(x = annual_growth-1, y = top1_to_median, color = T_age)) +
   geom_line(data = model_no_growth %>% filter(T_age==400 & annual_growth<=1.05),
-            aes(x = annual_growth-1, y = gini, color = T_age)) +
-  geom_point(data = wealth %>% filter(source=="OECD/Eurostat ICW" & iso!="CN"),
-             aes(x = growth_last20-1, y = gini, color = source)) +
+            aes(x = annual_growth-1, y = top1_to_median, color = T_age)) +
+  geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+             aes(x = growth_last20-1, y = top1_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = top1_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy") +
-  labs(x = "Growth rate", y = "Inequality", title = "(b) Gini coefficient") +
+  labs(x = "Growth rate", y = "Inequality", title = "(b) Top 1% relative to median") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
@@ -162,6 +186,10 @@ panel_c <- ggplot() +
             aes(x = annual_growth-1, y = top5_to_median, color = T_age)) +
   geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
              aes(x = growth_last20-1, y = top5_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = top5_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy") +
   labs(x = "Growth rate", y = "Inequality", title = "(c) Top 5% relative to median") +
   theme_light() + 
@@ -177,6 +205,10 @@ panel_d <- ggplot() +
             aes(x = annual_growth-1, y = top10_to_median, color = T_age)) +
   geom_point(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
              aes(x = growth_last20-1, y = top10_to_median, color = source)) +
+  # geom_smooth(data = wealth %>% filter(source=="OECD WDD" & iso!="CN"),
+  #             aes(x = growth_last20-1, y = top10_to_median, color = source),
+  #             method=lm, se=FALSE, fullrange=TRUE, size = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy") +
   labs(x = "Growth rate", y = "Inequality", title = "(d) Top 10% relative to median") +
   theme_light() + 

@@ -83,7 +83,7 @@ class cstwMPCmarket(EstimationMarketClass):
     track_vars = ['MaggNow','AaggNow','KtoYnow', 'LorenzLvl','LorenzLongLvl', 'LorenzLongNrm', 
                   'LorenzLongInc', 'MPCall','MPCretired','MPCemployed','MPCunemployed','MPCbyIncome',
                   'MPCbyWealthRatio','HandToMouthPct', 'aLvlMean', 'aNrmMean', 'aLvlMedian', 'aNrmMedian',
-                  'aLvlPercentiles', 'aNrmPercentiles']
+                  'aLvlPercentiles', 'aNrmPercentiles', 'DiscFacByWealth', 'AgeByWealth']
 #                  'aLvlGini', 'aNrmGini']
                   
     dyn_vars = [] # No dynamics in the idiosyncratic shocks version
@@ -194,6 +194,9 @@ class cstwMPCmarket(EstimationMarketClass):
             self.aLvlMedian = np.median(aLvl)
             self.aLvlPercentiles = getPercentiles(aLvl,weights=CohortWeight,
                                                   percentiles=np.arange(0.01,1.0,0.01),presorted=False)
+            DiscFac = [agent.DiscFac for agent in self.agents]
+            self.DiscFacByWealth = calcSubpopAvg(DiscFac, aLvl, self.cutoffs, CohortWeight)
+            self.AgeByWealth = calcSubpopAvg(age, aLvl, self.cutoffs, CohortWeight)
             
             # Compute statistics for wealth-to-income ratios
 #            self.aNrmGini = getGini(aNrm,weights=CohortWeight,presorted=False)
@@ -246,6 +249,8 @@ class cstwMPCmarket(EstimationMarketClass):
             self.aNrmMedian = np.nan
             self.aLvlPercentiles = np.nan
             self.aNrmPercentiles = np.nan
+            self.DiscFacByWealth = np.nan
+            self.AgeByWealth = np.nan
             self.MPCall = np.nan
             self.MPCunemployed = np.nan
             self.MPCemployed = np.nan
@@ -363,6 +368,8 @@ class cstwMPCmarket(EstimationMarketClass):
         self.aNrmMedianSim = np.mean(self.aNrmMedian_hist[self.ignore_periods:])
         self.aLvlPercentilesSim = np.hstack(np.mean(np.array(self.aLvlPercentiles_hist)[self.ignore_periods:,:],axis=0))
         self.aNrmPercentilesSim = np.hstack(np.mean(np.array(self.aNrmPercentiles_hist)[self.ignore_periods:,:],axis=0))
+        self.DiscFacByWealthSim = np.hstack(np.mean(np.array(self.DiscFacByWealth_hist)[self.ignore_periods:,:],axis=0))
+        self.AgeByWealthSim = np.hstack(np.mean(np.array(self.AgeByWealth_hist)[self.ignore_periods:,:],axis=0))
         
         # Compute and store MPC overall and by subpopulations
         self.MPCallSim = np.mean(self.MPCall_hist[self.ignore_periods:])

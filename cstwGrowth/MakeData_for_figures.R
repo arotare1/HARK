@@ -385,11 +385,12 @@ cs_wealth2 <- cs_wealth2 %>%
          top10_share = V11/100,
          bot20_share = (V2+V3)/100,
          bot40_share = (V2+V3+V4+V5)/100,
+         bot60_share = (V2+V3+V4+V5+V6+V7)/100,
          top20_share = (100-V2-V3-V4-V5-V6-V7-V8-V9)/100,
          mid60_share = 1-top20_share-bot20_share,
          top20_to_bot20 = top20_share/bot20_share) %>%
-  select(country, top1_share, top5_share, top10_share, bot20_share, bot40_share,mid60_share, 
-         top20_to_bot20)
+  select(country, top1_share, top5_share, top10_share, bot20_share, bot40_share, bot60_share,
+         mid60_share, top20_to_bot20)
 
 cs_wealth3 <- cs_wealth3 %>%
   rename(country = V1, gini = V10) %>%

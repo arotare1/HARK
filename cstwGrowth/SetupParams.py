@@ -258,7 +258,7 @@ init_market = {'LorenzBool': False,
                'Population':Population,
                'act_T':0,             # Will get overwritten
                'IncUnemp':IncUnemp,
-               'cutoffs':[(0.99,1),(0.9,1),(0.8,1),(0.6,0.8),(0.4,0.6),(0.2,0.4),(0.0,0.2)],
+               'cutoffs':[(0.99,1),(0.95,1),(0.9,1),(0.8,1),(0.6,0.8),(0.4,0.6),(0.2,0.4),(0.0,0.2)],
                'LorenzPercentiles':percentiles_to_match,
                'AggShockBool':do_agg_shocks
                }

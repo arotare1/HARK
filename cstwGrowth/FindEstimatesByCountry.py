@@ -19,11 +19,11 @@ import SetupParams as Params
 from cstwGrowth import cstwMPCagent, cstwMPCmarket, calcStationaryAgeDstn, \
                         findLorenzDistanceAtTargetKY, getKYratioDifference
                         
-Params.do_param_dist = False     # Do param-dist version if True, param-point if False
-horizon = '20'      # Set interval over which we analyze changes in the wealth distribution
+Params.do_param_dist = True     # Do param-dist version if True, param-point if False
+horizon = '25'      # Set interval over which we analyze changes in the wealth distribution
                     # Can be 20, 25, 30
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
-do_actual_KY = True      # Set K/Y ratio from data instead of 10.26 if True
+do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
 do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
 do_high_Rfree = False    # Set quarterly interest rate to 1.02 instead of 1.01 if True
 do_high_CRRA = False     # Set CRRA coefficient to be 2.0 instead of 1 if True
@@ -174,28 +174,17 @@ for country in country_list:
         
         # Make figure of Lorenz fit
         LorenzAxis = np.arange(101,dtype=float)
-        if country == 'ES':     # Must deal with missing values
-            fig = plt.figure()
-            plt.plot(LorenzAxis, EstimationEconomy.LorenzData.astype(np.double), '.k', label = 'data')
-            plt.plot(LorenzAxis, EstimationEconomy.LorenzLongLvlSim, '--', label = 'model')
-            plt.xlabel('Wealth percentile')
-            plt.ylabel('Cumulative wealth share')
-            plt.title(country + ' wealth distribution ' + str(estimation_year))
-            plt.ylim([-0.04,1.0])
-            plt.legend(loc='upper left')
-            plt.show()
-            fig.savefig('../../output/CountryEstimates/' + country + Params.spec_name + '.pdf')
-        else:
-            fig = plt.figure()
-            plt.plot(LorenzAxis, EstimationEconomy.LorenzData, '-k', linewidth = 1.5, label = 'data')
-            plt.plot(LorenzAxis, EstimationEconomy.LorenzLongLvlSim, '--', label = 'model')
-            plt.xlabel('Wealth percentile')
-            plt.ylabel('Cumulative wealth share')
-            plt.title(country + ' wealth distribution ' + str(estimation_year))
-            plt.ylim([-0.04,1.0])
-            plt.legend(loc='upper left')
-            plt.show()
-            fig.savefig('../../output/CountryEstimates/' + country + Params.spec_name + '.pdf')
+        idx = ~np.isnan(EstimationEconomy.LorenzData)
+        fig = plt.figure()
+        plt.plot(LorenzAxis, EstimationEconomy.LorenzData[idx], '-k', label = 'data')
+        plt.plot(LorenzAxis, EstimationEconomy.LorenzLongLvlSim, '--', label = 'model')
+        plt.xlabel('Wealth percentile')
+        plt.ylabel('Cumulative wealth share')
+        plt.title(country + ' wealth distribution ' + str(estimation_year))
+        plt.ylim([-0.04,1.0])
+        plt.legend(loc='upper left')
+        plt.show()
+        fig.savefig('../../output/CountryEstimates/' + country + Params.spec_name + '.pdf')
         
         # Save estimates and a bunch of parameters used in estimation
         with open('../../output/CountryEstimates/' + country + Params.spec_name + '.pkl', 'w') as f:

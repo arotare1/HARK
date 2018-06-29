@@ -17,9 +17,9 @@ import SetupParams as Params
 from cstwGrowth import getGiniPrc
 
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-do_actual_KY = True            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
-do_low_T_age = True      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
-estimation_growth = 1.0     # Set growth rate to be used when estimating parameters 
+do_actual_KY = False            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
+do_low_T_age = False      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
+estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
 
@@ -57,6 +57,8 @@ aLvlMeanToMedianSim = []
 aNrmMeanToMedianSim = []
 aLvlPercentilesSim = []
 aNrmPercentilesSim = []
+DiscFacByWealthSim = []
+AgeByWealthSim = []
 
 T_age_list = [400, 200, 160]
 
@@ -94,6 +96,8 @@ for T_age in T_age_list:
         aNrmMeanToMedianSim.append(NewEconomy.aNrmMeanSim / NewEconomy.aNrmMedianSim)
         aLvlPercentilesSim.append(NewEconomy.aLvlPercentilesSim)
         aNrmPercentilesSim.append(NewEconomy.aNrmPercentilesSim)
+        DiscFacByWealthSim.append(NewEconomy.DiscFacByWealthSim)
+        AgeByWealthSim.append(NewEconomy.AgeByWealthSim)
         
         print('Solving took ' + str(t_end-t_start) + ' seconds.\n')
 
@@ -116,5 +120,7 @@ with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl', 'w') as f:
                  aLvlMeanToMedianSim,
                  aNrmMeanToMedianSim,
                  aLvlPercentilesSim,
-                 aNrmPercentilesSim], f)
+                 aNrmPercentilesSim,
+                 DiscFacByWealthSim,
+                 AgeByWealthSim], f)
 
