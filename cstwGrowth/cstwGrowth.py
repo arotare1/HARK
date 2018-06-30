@@ -194,7 +194,7 @@ class cstwMPCmarket(EstimationMarketClass):
             self.aLvlMedian = np.median(aLvl)
             self.aLvlPercentiles = getPercentiles(aLvl,weights=CohortWeight,
                                                   percentiles=np.arange(0.01,1.0,0.01),presorted=False)
-            DiscFac = [agent.DiscFac for agent in self.agents]
+            DiscFac = np.hstack([[self.agents[i].DiscFac]*self.agents[i].AgentCount for i in range(len(self.agents))])
             self.DiscFacByWealth = calcSubpopAvg(DiscFac, aLvl, self.cutoffs, CohortWeight)
             self.AgeByWealth = calcSubpopAvg(age, aLvl, self.cutoffs, CohortWeight)
             
