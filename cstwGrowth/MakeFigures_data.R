@@ -41,7 +41,7 @@ panel_a <- ggplot(wealth %>% filter(source!="WID.world" & source!="OECD In it To
   geom_text_repel(aes(label=iso), show.legend = FALSE, size = 2, segment.size = 0.2,
                   segment.alpha = 0.5, point.padding = 0.15) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE, size = 0.5)  +
-  labs(x = "Growth rate", y = "Inequality", title = "(a) Mean to median ratio", color = "") +
+  labs(x = "Growth rate", y = "Inequality", title = "(a) Mean-to-median ratio", color = "") +
   theme_light()  + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9),
@@ -211,7 +211,7 @@ panel_a <- ggplot(wealth %>% filter((source=="OECD WDD" | source=="Credit Suisse
   geom_text_repel(aes(label=iso), show.legend = FALSE, size = 2, segment.size = 0.2,
                   segment.alpha = 0.5, point.padding = 0.15) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE, size = 0.5)  +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(a) Growth over the last 30 years", color = "") +
+  labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(a) Growth over the last 30 years", color = "") +
   theme_light()  + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9),
@@ -224,7 +224,7 @@ panel_b <- ggplot(wealth %>% filter((source=="OECD WDD" | source=="Credit Suisse
   geom_text_repel(aes(label=iso), show.legend = FALSE, size = 2, segment.size = 0.2,
                   segment.alpha = 0.5, point.padding = 0.15) +
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE, size = 0.5)  +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(b) Growth over the last 40 years", color = "") +
+  labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(b) Growth over the last 40 years", color = "") +
   theme_light()  + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))

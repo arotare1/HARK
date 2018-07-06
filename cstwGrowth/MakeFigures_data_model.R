@@ -54,7 +54,7 @@ panel_a <- ggplot() +
   geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy",
                      labels = c("64 years","74 years","124 years","OECD WDD")) +
-  labs(x = "Growth rate", y = "Inequality", title = "(a) Mean to median ratio",
+  labs(x = "Growth rate", y = "Inequality", title = "(a) Mean-to-median ratio",
        color = "Terminal age:") +
   guides(color=guide_legend(override.aes=list(shape=c(NA,NA,NA,16),linetype=c(1,1,1,0)))) +
   theme_light() + 
@@ -150,7 +150,7 @@ panel_a <- ggplot() +
   geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_brewer(palette = "RdGy",
                      labels = c("64 years","74 years","124 years","OECD WDD")) +
-  labs(x = "Growth rate", y = "Inequality", title = "(a) Mean to median ratio",
+  labs(x = "Growth rate", y = "Inequality", title = "(a) Mean-to-median ratio",
        color = "Terminal age:") +
   guides(color=guide_legend(override.aes=list(shape=c(NA,NA,NA,16),linetype=c(1,1,1,0)))) +
   theme_light() + 

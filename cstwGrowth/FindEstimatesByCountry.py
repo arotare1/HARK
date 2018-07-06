@@ -170,6 +170,7 @@ for country in country_list:
                                            spread_estimate,Params.dist_type)
         EstimationEconomy.solve()
         EstimationEconomy.calcLorenzDistance()
+        EstimationEconomy.calcKYratioDifference()
         EstimationEconomy.showManyStats()
         
         # Make figure of Lorenz fit

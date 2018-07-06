@@ -55,7 +55,11 @@ with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl') as f:
     aLvlMeanToMedianSim,\
     aNrmMeanToMedianSim,\
     aLvlPercentilesSim,\
-    aNrmPercentilesSim = pickle.load(f) 
+    aNrmPercentilesSim,\
+    DiscFacByWealthSim,\
+    AgeByWealthSim, \
+    DiscFacByIncSim, \
+    AgeByIncSim = pickle.load(f)
 
 # For selected inequality measures, pick just the ones corresponding to T_age used in estiamtion
 aLvlMeanToMedianSim = np.array(aLvlMeanToMedianSim)[np.array(T_ageSim)==Economy.agents[0].T_age]

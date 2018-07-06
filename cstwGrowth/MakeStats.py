@@ -22,8 +22,8 @@ from cstwGrowth import getGiniPrc
 
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
 do_actual_KY = False            # Use actual K/Y ratio from WID.world if True, 10.26 o.w.
-do_lower_T_age = False      # Set the maximum age in simulation to 160 (=74 yrs) intead of 400 if True
-estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimating parameters 
+do_low_T_age = False      # Set the maximum age in simulation to 200 (=74 yrs) intead of 400 if True
+estimation_growth = 1.0     # Set growth rate to be used when estimating parameters 
                             # If equal to 1 estimates are saved in ../output/BaselineEstimates/NoGrowth/
                             # If > 1 estimates are saved in ../output/BaselineEstimates/HighGrowth
 
@@ -31,12 +31,12 @@ estimation_growth = 1.015**(0.25)     # Set growth rate to be used when estimati
 
 # Update spec_name
 Params.spec_name = '/NoGrowth' if estimation_growth == 1 else '/HighGrowth'
-if do_actual_KY and not do_lower_T_age:
+if do_actual_KY and not do_low_T_age:
     Params.spec_name += '/actual_KY'
-if do_lower_T_age and not do_actual_KY:
-    Params.spec_name += '/lower_T_age'
-if do_lower_T_age and do_actual_KY:
-    Params.spec_name += '/lower_T_age_actual_KY'
+if do_low_T_age and not do_actual_KY:
+    Params.spec_name += '/low_T_age'
+if do_low_T_age and do_actual_KY:
+    Params.spec_name += '/low_T_age_actual_KY'
 Params.spec_name += '/Dist' if Params.do_param_dist else '/Point'
 
 # Load economy
@@ -61,8 +61,13 @@ with open('../../output/VaryGrowth/' + Params.spec_name + '.pkl') as f:
     aLvlMeanToMedianSim,\
     aNrmMeanToMedianSim,\
     aLvlPercentilesSim,\
-    aNrmPercentilesSim = pickle.load(f)
+    aNrmPercentilesSim, \
+    DiscFacByWealthSim, \
+    AgeByWealthSim, \
+    DiscFacByIncSim, \
+    AgeByIncSim = pickle.load(f)
 
+pdb.set_trace()
 
 # Compute top wealth shares
 aLvl_top1_share = [1-item[99] for item in LorenzLongLvlSim]
@@ -75,6 +80,22 @@ aLvl_top10_share = [1-item[90] for item in LorenzLongLvlSim]
 aNrm_top10_share = [1-item[90] for item in LorenzLongNrmSim]
 
 aLvl_bot40_share = [item[40] for item in LorenzLongLvlSim]
+
+# Compute average DiscFac in top percentiles
+DiscFac_top1_wealth = [item[0] for item in DiscFacByWealthSim]
+DiscFac_top5_wealth = [item[1] for item in DiscFacByWealthSim]
+DiscFac_top10_wealth = [item[2] for item in DiscFacByWealthSim]
+DiscFac_top1_inc = [item[0] for item in DiscFacByIncSim]
+DiscFac_top5_inc = [item[1] for item in DiscFacByIncSim]
+DiscFac_top10_inc = [item[2] for item in DiscFacByIncSim]
+
+# Compute average age in top percentiles
+Age_top1_wealth = [item[0] for item in AgeByWealthSim]
+Age_top5_wealth = [item[1] for item in AgeByWealthSim]
+Age_top10_wealth = [item[2] for item in AgeByWealthSim]
+Age_top1_inc = [item[0] for item in AgeByIncSim]
+Age_top5_inc = [item[1] for item in AgeByIncSim]
+Age_top10_inc = [item[2] for item in AgeByIncSim]
 
 
 # Compute absolute deviation from median
@@ -103,25 +124,37 @@ csvdict = {'T_age' : T_ageSim,
            'top1_to_median' : aLvl_top1_to_median,
            'top5_to_median' : aLvl_top5_to_median,
            'top10_to_median' : aLvl_top10_to_median,
-           'bot40_to_median' : aLvl_bot40_to_median}
+           'bot40_to_median' : aLvl_bot40_to_median,
+           'DiscFac_top1_wealth' : DiscFac_top1_wealth,
+           'DiscFac_top5_wealth' : DiscFac_top5_wealth,
+           'DiscFac_top10_wealth' : DiscFac_top10_wealth,
+           'Age_top1_wealth' : Age_top1_wealth,
+           'Age_top5_wealth' : Age_top5_wealth,
+           'Age_top10_wealth' : Age_top10_wealth,
+           'DiscFac_top1_inc' : DiscFac_top1_inc,
+           'DiscFac_top5_inc' : DiscFac_top5_inc,
+           'DiscFac_top10_inc' : DiscFac_top10_inc,
+           'Age_top1_inc' : Age_top1_inc,
+           'Age_top5_inc' : Age_top5_inc,
+           'Age_top10_inc' : Age_top10_inc}
 
 df = pd.DataFrame.from_dict(csvdict)
 df.to_csv('../../output/VaryGrowth/' + Params.spec_name + '.csv')
     
-# Plot Gini coefficient
-fig = plt.figure()
-plt.plot(annual_growthFactors[0:11], aLvlGiniSim[0:11], '-ro', label='wealth levels')
-plt.plot(annual_growthFactors[0:11], aNrmGiniSim[0:11], '-go', label='wealth to income ratios')
-plt.plot(annual_growthFactors[0:11], IncGiniSim[0:11], '-bo', label='income')
-plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
-plt.xlabel('Annual growth')
-plt.title('Gini coefficient')
-plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-plt.show()
-fig.savefig('../../output/Figures_model' + Params.spec_name + '_gini.pdf', bbox_inches='tight')
-fig.savefig('../../tex/model_ginis_no_growth.pdf' if estimation_growth==1 else '../../tex/model_ginis_high_growth.pdf', bbox_inches='tight')
-
-
+## Plot Gini coefficient
+#fig = plt.figure()
+#plt.plot(annual_growthFactors[0:11], aLvlGiniSim[0:11], '-ro', label='wealth levels')
+#plt.plot(annual_growthFactors[0:11], aNrmGiniSim[0:11], '-go', label='wealth to income ratios')
+#plt.plot(annual_growthFactors[0:11], IncGiniSim[0:11], '-bo', label='income')
+#plt.axvline(x = Economy.agents[0].PermGroFac[0]**4)
+#plt.xlabel('Annual growth')
+#plt.title('Gini coefficient')
+#plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+#plt.show()
+#fig.savefig('../../output/Figures_model' + Params.spec_name + '_gini.pdf', bbox_inches='tight')
+#fig.savefig('../../tex/model_ginis_no_growth.pdf' if estimation_growth==1 else '../../tex/model_ginis_high_growth.pdf', bbox_inches='tight')
+#
+#
 ## Plot mean-to-median ratio
 #fig = plt.figure()
 #plt.plot(annual_growthFactors, aLvlMeanToMedianSim, '-ro', label='wealth levels')

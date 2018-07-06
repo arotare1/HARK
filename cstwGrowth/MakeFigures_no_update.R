@@ -47,10 +47,11 @@ panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_mean_to_median" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
                        labels = c("update behavior with growth",
                                   "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(a) Wealth levels", color = "") +
+  labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(a) Wealth levels", color = "") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9),
@@ -61,7 +62,8 @@ panel_b <- ggplot(high_growth %>% filter(variable=="Nrm_mean_to_median" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(b) Wealth to income ratios") +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
+  labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(b) Wealth-to-income ratios") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
@@ -79,10 +81,11 @@ panel_a <- ggplot(no_growth %>% filter(variable=="Lvl_mean_to_median" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
                        labels = c("update behavior with growth",
                                   "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(a) Wealth levels", color = "") +
+  labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(a) Wealth levels", color = "") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9),
@@ -93,7 +96,8 @@ panel_b <- ggplot(no_growth %>% filter(variable=="Nrm_mean_to_median" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(b) Wealth to income ratios") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
+  labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(b) Wealth-to-income ratios") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
@@ -115,6 +119,7 @@ panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_gini" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
                        labels = c("update behavior with growth",
                                   "don't update behavior with growth")) +
@@ -129,10 +134,11 @@ panel_b <- ggplot(high_growth %>% filter(variable=="Nrm_gini" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
+  geom_vline(xintercept = 0.015, linetype = "dashed", color = "blue") +
   scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
                        labels = c("update behavior with growth",
                                   "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Gini coefficient", title = "(b) Wealth to income ratios", color = "") +
+  labs(x = "Growth rate", y = "Gini coefficient", title = "(b) Wealth-to-income ratios", color = "") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
@@ -149,6 +155,7 @@ panel_a <- ggplot(no_growth %>% filter(variable=="Lvl_gini" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
                        labels = c("update behavior with growth",
                                   "don't update behavior with growth")) +
@@ -163,10 +170,11 @@ panel_b <- ggplot(no_growth %>% filter(variable=="Nrm_gini" |
                   aes(x = annual_growth-1, y = value, color = variable)) +
   geom_line() +
   geom_point() +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "blue") +
   scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
                        labels = c("update behavior with growth",
                                   "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Gini coefficient", title = "(b) Wealth to income ratios", color = "") +
+  labs(x = "Growth rate", y = "Gini coefficient", title = "(b) Wealth-to-income ratios", color = "") +
   theme_light() + 
   theme(plot.title = element_text(hjust = 0.5, size = 10),
         axis.title = element_text(size = 9))
@@ -179,126 +187,126 @@ ggsave("gini_no_update_no_growth.pdf", plot = gini_no_update, device = "pdf", wi
 ggsave("../../tex/gini_no_update_no_growth.pdf", plot = gini_no_update, device = "pdf", width = 8, height = 4)
 
 
-#-------------------------------------------#
-# Make combined figure
-#-------------------------------------------#
-
-panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_mean_to_median" |
-                                         variable=="Lvl_mean_to_median_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
-                       labels = c("update behavior with growth",
-                                  "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(a) Wealth levels", color = "") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9),
-        legend.position = "bottom")
-
-panel_b <- ggplot(high_growth %>% filter(variable=="Nrm_mean_to_median" |
-                                         variable=="Nrm_mean_to_median_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(b) Wealth to income ratios") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9))
-
-panel_c <- ggplot(high_growth %>% filter(variable=="Lvl_gini" |
-                                         variable=="Lvl_gini_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
-                       labels = c("update behavior with growth",
-                                  "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Gini coefficient", title = "(c) Wealth levels", color = "") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9))
-
-panel_d <- ggplot(high_growth %>% filter(variable=="Nrm_gini" |
-                                         variable=="Nrm_gini_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
-                       labels = c("update behavior with growth",
-                                  "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Gini coefficient", title = "(d) Wealth to income ratios", color = "") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9))
-
-no_update <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      panel_c + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      panel_d + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      nrow = 2),
-                          g_legend(panel_a), nrow = 2, heights = c(10,1))
-ggsave("no_update_high_growth.pdf", plot = no_update, device = "pdf", width = 8, height = 8)
-ggsave("../../tex/no_update_high_growth.pdf", plot = no_update, device = "pdf", width = 8, height = 8)
-
-
-panel_a <- ggplot(no_growth %>% filter(variable=="Lvl_mean_to_median" |
-                                           variable=="Lvl_mean_to_median_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
-                       labels = c("update behavior with growth",
-                                  "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(a) Wealth levels", color = "") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9),
-        legend.position = "bottom")
-
-panel_b <- ggplot(no_growth %>% filter(variable=="Nrm_mean_to_median" |
-                                           variable=="Nrm_mean_to_median_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  labs(x = "Growth rate", y = "Mean to median ratio", title = "(b) Wealth to income ratios") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9))
-
-panel_c <- ggplot(no_growth %>% filter(variable=="Lvl_gini" |
-                                           variable=="Lvl_gini_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
-                       labels = c("update behavior with growth",
-                                  "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Gini coefficient", title = "(c) Wealth levels", color = "") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9))
-
-panel_d <- ggplot(no_growth %>% filter(variable=="Nrm_gini" |
-                                           variable=="Nrm_gini_no_update"),
-                  aes(x = annual_growth-1, y = value, color = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
-                       labels = c("update behavior with growth",
-                                  "don't update behavior with growth")) +
-  labs(x = "Growth rate", y = "Gini coefficient", title = "(d) Wealth to income ratios", color = "") +
-  theme_light() + 
-  theme(plot.title = element_text(hjust = 0.5, size = 10),
-        axis.title = element_text(size = 9))
-
-no_update_no_growth <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      panel_c + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      panel_d + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
-                                      nrow = 2),
-                          g_legend(panel_a), nrow = 2, heights = c(10,1))
-ggsave("no_update_no_growth.pdf", plot = no_update_no_growth, device = "pdf", width = 8, height = 8)
-ggsave("../../tex/no_update_no_growth.pdf", plot = no_update_no_growth, device = "pdf", width = 8, height = 8)
-
+# #-------------------------------------------#
+# # Make combined figure
+# #-------------------------------------------#
+# 
+# panel_a <- ggplot(high_growth %>% filter(variable=="Lvl_mean_to_median" |
+#                                          variable=="Lvl_mean_to_median_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
+#                        labels = c("update behavior with growth",
+#                                   "don't update behavior with growth")) +
+#   labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(a) Wealth levels", color = "") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9),
+#         legend.position = "bottom")
+# 
+# panel_b <- ggplot(high_growth %>% filter(variable=="Nrm_mean_to_median" |
+#                                          variable=="Nrm_mean_to_median_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(b) Wealth-to-income ratios") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9))
+# 
+# panel_c <- ggplot(high_growth %>% filter(variable=="Lvl_gini" |
+#                                          variable=="Lvl_gini_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
+#                        labels = c("update behavior with growth",
+#                                   "don't update behavior with growth")) +
+#   labs(x = "Growth rate", y = "Gini coefficient", title = "(c) Wealth levels", color = "") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9))
+# 
+# panel_d <- ggplot(high_growth %>% filter(variable=="Nrm_gini" |
+#                                          variable=="Nrm_gini_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
+#                        labels = c("update behavior with growth",
+#                                   "don't update behavior with growth")) +
+#   labs(x = "Growth rate", y = "Gini coefficient", title = "(d) Wealth-to-income ratios", color = "") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9))
+# 
+# no_update <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       panel_c + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       panel_d + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       nrow = 2),
+#                           g_legend(panel_a), nrow = 2, heights = c(10,1))
+# ggsave("no_update_high_growth.pdf", plot = no_update, device = "pdf", width = 8, height = 8)
+# ggsave("../../tex/no_update_high_growth.pdf", plot = no_update, device = "pdf", width = 8, height = 8)
+# 
+# 
+# panel_a <- ggplot(no_growth %>% filter(variable=="Lvl_mean_to_median" |
+#                                            variable=="Lvl_mean_to_median_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   scale_color_discrete(breaks = c("Lvl_mean_to_median", "Lvl_mean_to_median_no_update"),
+#                        labels = c("update behavior with growth",
+#                                   "don't update behavior with growth")) +
+#   labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(a) Wealth levels", color = "") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9),
+#         legend.position = "bottom")
+# 
+# panel_b <- ggplot(no_growth %>% filter(variable=="Nrm_mean_to_median" |
+#                                            variable=="Nrm_mean_to_median_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   labs(x = "Growth rate", y = "Mean-to-median ratio", title = "(b) Wealth-to-income ratios") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9))
+# 
+# panel_c <- ggplot(no_growth %>% filter(variable=="Lvl_gini" |
+#                                            variable=="Lvl_gini_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   scale_color_discrete(breaks = c("Lvl_gini", "Lvl_gini_no_update"),
+#                        labels = c("update behavior with growth",
+#                                   "don't update behavior with growth")) +
+#   labs(x = "Growth rate", y = "Gini coefficient", title = "(c) Wealth levels", color = "") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9))
+# 
+# panel_d <- ggplot(no_growth %>% filter(variable=="Nrm_gini" |
+#                                            variable=="Nrm_gini_no_update"),
+#                   aes(x = annual_growth-1, y = value, color = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   scale_color_discrete(breaks = c("Nrm_gini", "Nrm_gini_no_update"),
+#                        labels = c("update behavior with growth",
+#                                   "don't update behavior with growth")) +
+#   labs(x = "Growth rate", y = "Gini coefficient", title = "(d) Wealth-to-income ratios", color = "") +
+#   theme_light() + 
+#   theme(plot.title = element_text(hjust = 0.5, size = 10),
+#         axis.title = element_text(size = 9))
+# 
+# no_update_no_growth <- grid.arrange(arrangeGrob(panel_a + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       panel_b + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       panel_c + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       panel_d + theme(legend.position="none", plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm")),
+#                                       nrow = 2),
+#                           g_legend(panel_a), nrow = 2, heights = c(10,1))
+# ggsave("no_update_no_growth.pdf", plot = no_update_no_growth, device = "pdf", width = 8, height = 8)
+# ggsave("../../tex/no_update_no_growth.pdf", plot = no_update_no_growth, device = "pdf", width = 8, height = 8)
+# 

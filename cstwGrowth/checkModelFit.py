@@ -20,7 +20,7 @@ from cstwGrowth import getGiniPrc
 
                         
 Params.do_param_dist = True     # Do param-dist version if True, param-point if False
-horizon = '20'      # Set interval over which we analyze changes in the wealth distribution
+horizon = '25'      # Set interval over which we analyze changes in the wealth distribution
                     # Can be 20, 25, 30
 do_more_targets = False  # Set percentiles_to_match=[0.1,0.2,..,0.9] instead of [0.2,0.4,0.6,0.8] if True
 do_actual_KY = False      # Set K/Y ratio from data instead of 10.26 if True
@@ -48,7 +48,7 @@ if Params.do_param_dist:
 else:
     Params.pref_type_count = 1       # Just one beta type in beta-point
 
-country_list = ['ES', 'FR', 'GB', 'US']
+country_list = ['FR', 'GB', 'US']
 #country_list = ['ES']
 
 for country in country_list:      
@@ -70,6 +70,8 @@ for country in country_list:
     # Load estimation economy
     with open('../../output/CountryEstimates/' + country + Params.spec_name + '_EstimationEconomy.pkl', 'rb') as f:
         EconomyNow = pickle.load(f)
+    
+    #EconomyNow.calcKYratioDifference()
     
     # Create new economy
     EconomyAfter  = deepcopy(EconomyNow)
